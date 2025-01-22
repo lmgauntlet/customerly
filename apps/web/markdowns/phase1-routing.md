@@ -15,7 +15,7 @@ Below is a brief outline of how **Customerly** should handle routing, based on u
 
 ## **2. Signed-In as Admin or Agent**
 
-- **Route**: `"/agent"` (agent dashboard landing page)  
+- **Route**: `"/agent/dashboard"` (agent dashboard landing page)  
 - **Behavior**:  
   - If the user is **signed in** and their role is **admin** or **agent**, they are routed to the internal **agent interface**.  
   - This interface typically includes the **ticket queue**, administrative dashboards, or relevant role-based pages (e.g., “Teams” or “Routing Rules” for admins).
@@ -24,7 +24,7 @@ Below is a brief outline of how **Customerly** should handle routing, based on u
 
 ## **3. Signed-In as Customer**
 
-- **Route**: `"/tickets"` (customer landing page)  
+- **Route**: `"/customer/tickets"` (customer landing page)  
 - **Behavior**:  
   - If the user is **signed in** but **not** an admin/agent, they are considered a **customer**.  
   - They see a **customer portal** where they can create tickets, view ticket statuses, or access basic account settings.
@@ -38,8 +38,8 @@ Below is a brief outline of how **Customerly** should handle routing, based on u
    - If authenticated, proceed to **role check**.
 
 2. **Role Check**  
-   - **Admin/Agent**: Redirect to `"/agent"`.  
-   - **Customer**: Go to `"/dashboard"` (or whichever route is your standard customer entry point).
+   - **Admin/Agent**: Redirect to `"/agent/dashboard"`.  
+   - **Customer**: Go to `"/customer/tickets"` (or whichever route is your standard customer entry point).
 
 3. **Protected Routes**  
    - Any route under `"/agent"` requires **agent** or **admin** privileges.  
@@ -55,8 +55,8 @@ Below is a brief outline of how **Customerly** should handle routing, based on u
    - Create a file like `middleware.ts` at the root of your project.  
    - Read the Supabase auth session to determine if a user is logged in.  
    - If user lacks authentication, redirect to `"/"`.  
-   - If user is agent/admin, route to `"/agent"` as the default after sign-in.  
-   - If user is a customer, route to `"/dashboard"`.
+   - If user is agent/admin, route to `"/agent/dashboard"` as the default after sign-in.  
+   - If user is a customer, route to `"/customer/tickets"`.
 
 2. **Client-Side Checks**  
    - Use a custom hook (e.g., `useUser`) that returns user role info.  
@@ -67,8 +67,8 @@ Below is a brief outline of how **Customerly** should handle routing, based on u
 ## **Summary**
 
 - **Unauthenticated** users see the main/public landing page.  
-- **Authenticated Admin/Agent** users automatically go to the **agent interface** (`"/agent"`).  
-- **Authenticated Customers** go to a **customer portal** (e.g., `"/dashboard"` or `"/tickets"`).  
+- **Authenticated Admin/Agent** users automatically go to the **agent interface** (`"/agent/dashboard"`).  
+- **Authenticated Customers** go to a **customer portal** (e.g., `"/customer/tickets"`).  
 - **Middleware** or **client-side checks** enforce these rules, ensuring each user sees the correct interface based on their role.
 
 
@@ -107,58 +107,12 @@ With the advent of Next.js 13 and beyond, the **App Router** introduces enhanced
    - After verifying authentication, check the user's role (admin, agent, customer).
    - Redirect users to appropriate dashboards based on their roles:
      - **Admins/Agents**: Redirect to `"/agent/dashboard"`.
-     - **Customers**: Redirect to `"/dashboard"` or `"/tickets"`.
+     - **Customers**: Redirect to `"/customer/tickets"`.
 
 3. **Performance Optimization**
    - Keep middleware lightweight to minimize latency.
    - Avoid heavy computations or unnecessary database calls within middleware.
 
-### **Sample Middleware Implementation**
-
-```typescript
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getUserFromSession } from './lib/auth'; // Custom auth utility
-
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  
-  // Public routes
-  const publicRoutes = ['/', '/login', '/signup', '/api/public/*'];
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  // Get user session
-  const session = await getUserFromSession(req);
-  
-  if (!session) {
-    // Redirect unauthenticated users to main page
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-
-  const { role } = session.user;
-
-  if (role === 'admin' || role === 'agent') {
-    if (!pathname.startsWith('/agent')) {
-      // Redirect admins/agents to agent dashboard
-      return NextResponse.redirect(new URL('/agent/dashboard', req.url));
-    }
-  } else {
-    if (!pathname.startsWith('/dashboard')) {
-      // Redirect customers to their dashboard
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/((?!api/public|_next/static|favicon.ico).*)'],
-};
-```
 
 3. Define Clear and Consistent Route Structures
 
@@ -173,10 +127,7 @@ app/
 │   └── page.tsx              # Login Page
 ├── signup/
 │   └── page.tsx              # Signup Page
-├── dashboard/
-│   └── page.tsx              # Customer Dashboard
-├── tickets/
-│   ├── page.tsx              # Ticket List Page
+│   ├── page.tsx              # Customer Tickets Dashboard
 │   └── [ticketId]/
 │       └── page.tsx          # Ticket Details Page
 ├── agent/
@@ -198,7 +149,7 @@ app/
 ```
 
 Key Points
-	•	Role-Based Prefixes: Use /agent for admin and agent-specific routes, ensuring clear separation from customer-facing routes.
+	•	Role-Based Prefixes: Use /agent for admin and agent-specific routes, ensuring clear separation from customer-facing routes. Use /customer for customer-facing routes.
 	•	Dynamic Routes: Implement dynamic routing for individual tickets using [ticketId].
 	•	Nested Layouts: Utilize nested layouts for shared UI components within agent/admin sections.
 
@@ -247,41 +198,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 }
 ```
 
-5. Protect Sensitive Routes with Server-Side Checks
-
-Beyond middleware, enforce role-based access at the server or API level to prevent unauthorized data access.
-
-Best Practices
-	•	API Route Protection: Validate user roles within API routes before processing requests.
-	•	Data Fetching Security: Ensure that data fetched in server components respects user permissions and roles.
-
-Example: Protecting an API Route
-```typescript
-// app/api/tickets/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromSession } from '@/lib/auth';
-
-export async function GET(req: NextRequest) {
-  const session = await getUserFromSession(req);
-  
-  if (!session || (session.user.role !== 'admin' && session.user.role !== 'agent')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  }
-
-  // Fetch and return tickets
-}
-
-export async function POST(req: NextRequest) {
-  const session = await getUserFromSession(req);
-  
-  if (!session || (session.user.role !== 'admin' && session.user.role !== 'agent')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  }
-
-  // Create a new ticket
-}
-```
-
 6. Optimize for Performance with Code Splitting and Caching
 Efficient routing not only improves user experience but also enhances application performance.
 
@@ -306,37 +222,9 @@ const AgentDashboard = dynamic(() => import('@/components/agent/AgentDashboard')
 A logical and scalable folder structure facilitates easier navigation and maintenance as the project grows.
 
 Recommended Structure
-```plaintext
-app/
-├── api/                     # API Routes
-│   ├── auth/                # Authentication-related APIs
-│   │   └── [...supabase].ts
-│   └── tickets/             # Ticket management APIs
-│       └── route.ts
-├── agent/                   # Agent/Admin Specific Routes
-│   ├── dashboard/           # Agent Dashboard
-│   │   └── page.tsx
-│   ├── tickets/             # Agent Ticket Queue
-│   │   ├── page.tsx
-│   │   └── [ticketId]/      
-│   │       └── page.tsx
-│   └── settings/            # Admin Settings
-│       └── page.tsx
-├── dashboard/               # Customer Dashboard
-│   └── page.tsx
-├── tickets/                 # Customer Ticket Management
-│   ├── page.tsx
-│   └── [ticketId]/          
-│       └── page.tsx
-├── login/                   # Login Page
-│   └── page.tsx
-├── signup/                  # Signup Page
-│   └── page.tsx
-├── page.tsx                 # Main Landing Page
-└── layout.tsx               # Global Layout
-```
+
 Key Considerations
-	•	Feature-Based Organization: Group related functionalities (e.g., tickets, agent dashboard) within their own directories.
+	•	Feature-Based Organization: Group related functionalities (e.g., customer tickets, agent dashboard) within their own directories.
 	•	Separation of Concerns: Keep API routes, frontend pages, and shared components distinct to avoid clutter.
 	•	Scalability: Design the structure to accommodate future features without significant refactoring.
 

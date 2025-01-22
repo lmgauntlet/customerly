@@ -13,6 +13,7 @@
             ],
             "outputs": [
                 ".next/**",
+                "!.next/cache/**",
                 "dist/**"
             ],
             "inputs": [
@@ -23,6 +24,7 @@
             "env": [
                 "NEXT_PUBLIC_SUPABASE_URL",
                 "NEXT_SUPABASE_SERVICE_ROLE_KEY",
+                "TURBO_REMOTE_CACHE_SIGNATURE_KEY",
                 "VERCEL",
                 "VERCEL_URL",
                 "TURBO_TEAM",

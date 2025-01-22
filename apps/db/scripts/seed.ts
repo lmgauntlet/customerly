@@ -59,7 +59,7 @@ export async function seedDb(force = false) {
         }
 
         for (const table of tableOrder) {
-            const dataPath = path.join(__dirname, 'data', `${table}.json`)
+            const dataPath = path.join(__dirname, '..', 'seeds', 'data', `${table}.json`)
             const rawData = fs.readFileSync(dataPath, 'utf8')
             const data = JSON.parse(rawData)
 

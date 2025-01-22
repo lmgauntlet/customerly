@@ -1,0 +1,50 @@
+[
+    {
+        "id": "rule-urgent-prod",
+        "name": "Urgent Production Issues",
+        "conditions": {
+            "keywords": [
+                "production",
+                "outage",
+                "down",
+                "urgent"
+            ],
+            "priority": "high",
+            "source": [
+                "email",
+                "web"
+            ]
+        },
+        "actions": {
+            "set_priority": "urgent",
+            "assign_team": "team-tech",
+            "notify_channels": [
+                "slack",
+                "email"
+            ]
+        },
+        "priority": 100,
+        "is_active": true
+    },
+    {
+        "id": "rule-security",
+        "name": "Security Issues Router",
+        "conditions": {
+            "keywords": [
+                "security",
+                "2fa",
+                "authentication",
+                "breach"
+            ],
+            "tags": [
+                "security"
+            ]
+        },
+        "actions": {
+            "assign_team": "team-security",
+            "set_priority": "high"
+        },
+        "priority": 90,
+        "is_active": true
+    }
+]

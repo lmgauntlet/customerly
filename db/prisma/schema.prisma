@@ -1,0 +1,333 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["multiSchema", "postgresqlExtensions"]
+}
+
+datasource db {
+    provider   = "postgresql"
+    url        = env("DATABASE_URL")
+    directUrl  = env("DIRECT_URL")
+    extensions = [pgsodium(schema: "pgsodium"), supabase_vault, uuid_ossp(map: "uuid-ossp", schema: "extensions"), vector]
+}
+
+// Enums
+enum UserRole {
+    customer
+    agent
+    admin
+}
+
+enum TicketStatus {
+    new
+    open
+    in_progress
+    resolved
+    closed
+}
+
+enum TicketPriority {
+    low
+    medium
+    high
+    urgent
+}
+
+enum TicketSource {
+    email
+    web
+    chat
+    api
+    phone
+}
+
+enum AgentStatus {
+    online
+    offline
+    busy
+}
+
+enum KbStatus {
+    draft
+    published
+}
+
+enum WebhookStatus {
+    pending
+    delivered
+    failed
+}
+
+// Models
+model User {
+    id          String   @id @map("id")
+    email       String   @unique
+    name        String?
+    role        UserRole @default(customer)
+    preferences Json     @default("{}")
+    created_at  DateTime @default(now()) @db.Timestamptz(6)
+    updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    tickets            Ticket[]           @relation("CustomerTickets")
+    agent              Agent?
+    managedTeams       Team[]             @relation("TeamManager")
+    audit_logs         AuditLog[]
+    kb_articles        KbArticle[]
+    attachments        Attachment[]
+    response_templates ResponseTemplate[]
+    messages           TicketMessage[]
+
+    @@map("users")
+}
+
+model Team {
+    id            String   @id @map("id")
+    name          String
+    description   String?
+    coverageHours Json?    @map("coverage_hours")
+    managerId     String?  @map("manager_id")
+    created_at    DateTime @default(now()) @map("created_at")
+    updated_at    DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    manager            User?              @relation("TeamManager", fields: [managerId], references: [id])
+    agents             Agent[]
+    tickets            Ticket[]
+    dailyMetrics       DailyMetric[]
+    response_templates ResponseTemplate[]
+    automationRules    AutomationRule[]
+
+    @@index([managerId])
+    @@map("teams")
+}
+
+model Agent {
+    id             String      @id @map("id")
+    userId         String      @unique @map("user_id")
+    teamId         String?     @map("team_id")
+    skills         String[]
+    status         AgentStatus @default(online)
+    maxTickets     Int         @default(50) @map("max_tickets")
+    currentTickets Int         @default(0) @map("current_tickets")
+    created_at     DateTime    @default(now()) @map("created_at")
+    updated_at     DateTime    @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    user            User          @relation(fields: [userId], references: [id])
+    team            Team?         @relation(fields: [teamId], references: [id])
+    assignedTickets Ticket[]      @relation("AssignedAgent")
+    metrics         AgentMetric[]
+
+    @@index([teamId])
+    @@index([status])
+    @@map("agents")
+}
+
+model AgentMetric {
+    id                String   @id
+    agentId           String   @map("agent_id")
+    date              DateTime @db.Date
+    ticketsResolved   Int      @default(0) @map("tickets_resolved")
+    avgResponseTime   Int?     @map("avg_response_time") // minutes
+    avgResolutionTime Int?     @map("avg_resolution_time") // minutes
+    satisfactionScore Float?   @map("satisfaction_score")
+    created_at        DateTime @default(now()) @map("created_at")
+
+    // Relations
+    agent Agent @relation(fields: [agentId], references: [id])
+
+    @@unique([agentId, date])
+    @@map("agent_metrics")
+}
+
+model Ticket {
+    id              String                   @id @map("id")
+    title           String
+    description     String
+    status          TicketStatus             @default(new)
+    priority        TicketPriority           @default(medium)
+    source          TicketSource
+    customerId      String                   @map("customer_id")
+    teamId          String?                  @map("team_id")
+    assignedAgentId String?                  @map("assigned_agent_id")
+    slaDeadline     DateTime?                @map("sla_deadline")
+    firstResponseAt DateTime?                @map("first_response_at")
+    resolvedAt      DateTime?                @map("resolved_at")
+    tags            String[]
+    metadata        Json?
+    searchVector    Unsupported("tsvector")?
+    created_at      DateTime                 @default(now()) @map("created_at")
+    updated_at      DateTime                 @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    customer      User            @relation("CustomerTickets", fields: [customerId], references: [id])
+    team          Team?           @relation(fields: [teamId], references: [id])
+    assignedAgent Agent?          @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+    messages      TicketMessage[]
+    attachments   Attachment[]
+    audit_logs    AuditLog[]
+
+    @@index([status])
+    @@index([priority])
+    @@index([teamId])
+    @@index([assignedAgentId])
+    @@index([customerId])
+    @@index([searchVector], type: Gin)
+    @@map("tickets")
+}
+
+model TicketMessage {
+    id          String   @id
+    ticketId    String   @map("ticket_id")
+    senderId    String   @map("sender_id")
+    content     String
+    isInternal  Boolean  @default(false) @map("is_internal")
+    attachments Json     @default("[]")
+    created_at  DateTime @default(now()) @map("created_at")
+    updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    ticket Ticket @relation(fields: [ticketId], references: [id])
+    sender User   @relation(fields: [senderId], references: [id])
+
+    @@index([ticketId])
+    @@map("ticket_messages")
+}
+
+model KbCategory {
+    id          String   @id
+    name        String
+    description String?
+    parentId    String?  @map("parent_id")
+    created_at  DateTime @default(now()) @map("created_at")
+    updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    parent   KbCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+    children KbCategory[] @relation("CategoryHierarchy")
+    articles KbArticle[]
+
+    @@map("kb_categories")
+}
+
+model KbArticle {
+    id              String                   @id
+    title           String
+    content         String
+    categoryId      String                   @map("category_id")
+    authorId        String                   @map("author_id")
+    status          KbStatus                 @default(draft)
+    viewCount       Int                      @default(0) @map("view_count")
+    helpfulCount    Int                      @default(0) @map("helpful_count")
+    notHelpfulCount Int                      @default(0) @map("not_helpful_count")
+    searchVector    Unsupported("tsvector")?
+    created_at      DateTime                 @default(now()) @map("created_at")
+    updated_at      DateTime                 @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    category KbCategory @relation(fields: [categoryId], references: [id])
+    author   User       @relation(fields: [authorId], references: [id])
+
+    @@index([searchVector], type: Gin)
+    @@map("kb_articles")
+}
+
+model AutomationRule {
+    id         String   @id
+    name       String
+    teamId     String?  @map("team_id")
+    conditions Json
+    actions    Json
+    priority   Int      @default(0)
+    isActive   Boolean  @default(true) @map("is_active")
+    created_at DateTime @default(now()) @map("created_at")
+    updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    team Team? @relation(fields: [teamId], references: [id])
+
+    @@map("automation_rules")
+}
+
+model ResponseTemplate {
+    id         String   @id
+    name       String
+    content    String
+    creatorId  String   @map("creator_id")
+    teamId     String?  @map("team_id")
+    isPublic   Boolean  @default(true) @map("is_public")
+    usageCount Int      @default(0) @map("usage_count")
+    created_at DateTime @default(now()) @map("created_at")
+    updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+    // Relations
+    creator User  @relation(fields: [creatorId], references: [id])
+    team    Team? @relation(fields: [teamId], references: [id])
+
+    @@map("response_templates")
+}
+
+model AuditLog {
+    id         String   @id
+    entityType String   @map("entity_type")
+    entityId   String   @map("entity_id")
+    action     String
+    actorId    String   @map("actor_id")
+    changes    Json
+    created_at DateTime @default(now()) @map("created_at")
+
+    // Relations
+    actor  User    @relation(fields: [actorId], references: [id])
+    ticket Ticket? @relation(fields: [entityId], references: [id])
+
+    @@index([entityType, entityId])
+    @@map("audit_logs")
+}
+
+model WebhookDelivery {
+    id           String        @id
+    webhookType  String        @map("webhook_type")
+    payload      Json
+    status       WebhookStatus @default(pending)
+    errorMessage String?       @map("error_message")
+    created_at   DateTime      @default(now()) @map("created_at")
+
+    @@index([webhookType], map: "idx_webhook_deliveries_type")
+    @@index([status], map: "idx_webhook_deliveries_status")
+    @@map("webhook_deliveries")
+}
+
+model Attachment {
+    id          String   @id
+    bucketPath  String   @map("bucket_path")
+    fileName    String   @map("filename")
+    contentType String   @map("content_type")
+    size        Int
+    entityType  String   @map("entity_type")
+    entityId    String   @map("entity_id")
+    uploaderId  String   @map("uploader_id")
+    created_at  DateTime @default(now()) @map("created_at")
+
+    // Relations
+    uploader User   @relation(fields: [uploaderId], references: [id])
+    ticket   Ticket @relation(fields: [entityId], references: [id])
+
+    @@index([entityType, entityId], map: "idx_attachments_entity")
+    @@index([uploaderId], map: "idx_attachments_uploader")
+    @@map("attachments")
+}
+
+model DailyMetric {
+    id          String   @id
+    date        DateTime @db.Date
+    teamId      String?  @map("team_id")
+    metricsType String   @map("metrics_type")
+    metrics     Json
+    created_at  DateTime @default(now()) @map("created_at")
+
+    // Relations
+    team Team? @relation(fields: [teamId], references: [id])
+
+    @@unique([date, teamId, metricsType])
+    @@map("daily_metrics")
+}

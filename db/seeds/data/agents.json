@@ -1,0 +1,47 @@
+[
+    {
+        "id": "agent-alex",
+        "user_id": "user-agent-alex",
+        "team_id": "team-tech",
+        "skills": [
+            "api",
+            "networking",
+            "kubernetes",
+            "security",
+            "performance-tuning"
+        ],
+        "status": "online",
+        "max_tickets": 50,
+        "current_tickets": 3
+    },
+    {
+        "id": "agent-maria",
+        "user_id": "user-agent-maria",
+        "team_id": "team-tech",
+        "skills": [
+            "storage",
+            "backup",
+            "performance",
+            "databases",
+            "data-migration"
+        ],
+        "status": "online",
+        "max_tickets": 50,
+        "current_tickets": 2
+    },
+    {
+        "id": "agent-nina",
+        "user_id": "user-agent-nina",
+        "team_id": "team-billing",
+        "skills": [
+            "billing",
+            "subscription",
+            "enterprise",
+            "refunds",
+            "pricing"
+        ],
+        "status": "online",
+        "max_tickets": 40,
+        "current_tickets": 1
+    }
+]

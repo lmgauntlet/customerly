@@ -1,0 +1,42 @@
+[
+    {
+        "id": "tm_001",
+        "ticket_id": "tick_001",
+        "sender_id": "user-customer-liwei",
+        "content": "We're seeing rate limit errors in production. Our monitoring shows we're only at 800 req/min but getting throttled. This is blocking our deployment.",
+        "is_internal": false,
+        "created_at": "2024-02-15T10:00:00Z"
+    },
+    {
+        "id": "tm_002",
+        "ticket_id": "tick_001",
+        "sender_id": "user-agent-alex",
+        "content": "I've checked your account and I see the spikes. The rate limiting is being triggered because of burst traffic patterns. Let me adjust your burst limit to accommodate these spikes.",
+        "is_internal": false,
+        "created_at": "2024-02-15T10:15:00Z"
+    },
+    {
+        "id": "tm_003",
+        "ticket_id": "tick_001",
+        "sender_id": "user-agent-alex",
+        "content": "@team This customer might need to be moved to our enterprise plan given their usage patterns. Will need to coordinate with billing.",
+        "is_internal": true,
+        "created_at": "2024-02-15T10:16:00Z"
+    },
+    {
+        "id": "tm_004",
+        "ticket_id": "tick_002",
+        "sender_id": "user-customer-john",
+        "content": "Urgent: Our Kubernetes cluster isn't scaling despite high load. We're at risk of service degradation.",
+        "is_internal": false,
+        "created_at": "2024-02-15T09:00:00Z"
+    },
+    {
+        "id": "tm_005",
+        "ticket_id": "tick_002",
+        "sender_id": "user-agent-alex",
+        "content": "I've identified the issue - your HPA configuration is using a custom metric that's not being properly collected. I'll guide you through the fix.",
+        "is_internal": false,
+        "created_at": "2024-02-15T09:10:00Z"
+    }
+]

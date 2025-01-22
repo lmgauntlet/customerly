@@ -1,0 +1,113 @@
+# **Instructions for AI Coding Agent: Building Customerly (a Zendesk-like App)**
+Must follow:
+* Always remember that /apps/web is the frontend app that follows next.js folder strucutre. So all frontend logic is under apps/web/src
+
+
+Welcome to the **Customerly** monorepo! This project is structured into multiple services, each deployed separately. Below is a set of guidelines and conventions to follow whenever you (the AI coding agent) write or modify code for **Customerly**. 
+
+---
+
+## **1. Folder Structure Overview**
+
+1. **`apps/web/`**  
+   - **Purpose**: The front-end application for the Customerly dashboard (agent/admin side) and customer portal.  
+   - **Tech Stack**: Built using **next.js** and **npm**.  
+   - **How to Use**: Front-end logic, UI components, and any client-side scripts reside here.
+
+2. **`db/`**  
+   - **Purpose**: Database-related logic for **Supabase**. Handles schema definitions, migrations, and seeding.  
+   - **Tech Stack**: Uses **Prisma** to auto-generate migration files.  
+   - **How to Use**: Modify data models in `schema.prisma` and seed data.
+
+3. **`edge-functions/`**  
+   - **Purpose**: A repository of **Supabase Edge Functions** that handle serverless logic.  
+   - **Tech Stack**: Written in TypeScript/JS, deployed to Supabase as edge functions.  
+   - **How to Use**: Each function has its own folder within `edge-functions/`; deploy them independently as needed.
+
+4. **`markdowns/`**  
+   - **Purpose**: Contains the **high-level context** of what we’re building, why we’re building it, and any overarching architectural guides.  
+   - **How to Use**: **Read** these files first to understand the big-picture goals, constraints, or style guidelines before writing any code.
+
+---
+
+## **2. Reading and Interpreting Markdown Files**
+
+### 2.1 Top-Level Context
+- **`markdowns/`**: Start here to gain a holistic view of **Customerly**—the project’s objectives, design philosophies, and naming conventions.
+
+### 2.2 Sub-Directory Instructions
+- Each directory (`apps/web/`, `db/`, `edge-functions/`) can also contain **additional Markdown files** that provide **service-specific** instructions:
+  - For example, `apps/web/markdowns/ui-rules.md` will define visual and interaction guidelines for building components (including accessibility and design principles) while `apps/web/markdowns/theme-rules.md` will establish theming rules (typography, color, layout) to be incorporated into UI development.
+  - `db/README.md` might explain how to manage Prisma migrations or seed data.
+  - `edge-functions/README.md` could outline how to build, test, and deploy edge functions.
+
+**Always** review those Markdown files **thoroughly** when focusing your coding efforts on that particular sub-directory.
+
+---
+
+## **3. Instructions for Focusing on Specific Directories**
+
+### 3.1 When Asked to Work on `apps/web/`
+1. **Review `markdowns/`**: Ensure you have the overall context of the Customerly project.  
+2. **Check `apps/web/` Markdown Files**:  
+   - **`apps/web/ui-rules.md`**: Defines **visual and interaction guidelines** for building components, including accessibility and design principles.  
+   - **`apps/web/codebase-best-practices.md`**: Outlines the **folder structure**, file naming conventions, and **Next.js App Router** practices.  
+3. **Implementation Details**: 
+   - Use **supportal** for the front-end scaffold and **npm** for dependency management.  
+   - Ensure your component development, routing setup, and accessibility standards follow **ui-rules** and the **codebase-best-practices** in the `apps/web/` directory.
+
+### 3.2 When Asked to Work on `db/`
+1. **Review `markdowns/`**: Keep big-picture context in mind.  
+2. **Check `db/` Markdown Files**: They might contain instructions for naming tables, fields, or best practices around migrations.  
+3. **Implementation Details**: 
+   - Use **Prisma** to manage models and generate migration files.  
+   - Keep schema definitions consistent with the existing data models.  
+   - Ensure all changes are tested locally and documented for the rest of the team.
+
+### 3.3 When Asked to Work on `edge-functions/`
+1. **Review `markdowns/`**: Maintain consistency with overall architecture.  
+2. **Check `edge-functions/` Markdown Files**: Follow any function-specific or deployment guidelines.  
+3. **Implementation Details**:
+   - Write or modify TypeScript/JS code to handle serverless logic.  
+   - Confirm environment variables, data access, and triggers align with **Supabase**’s best practices.
+
+---
+
+## **4. Maintaining Consistency Across the Monorepo**
+
+- **Tech Stack Adherence**:  
+  - Only use the technologies specified in each sub-directory’s instructions.  
+  - Do not mix frameworks or libraries that contradict the official stack.
+
+- **Coding Style**:  
+  - Follow the naming conventions, lint rules, and formatting instructions laid out in the Markdown files (e.g., `.eslintrc`, `.prettierrc`).
+
+- **Dependency Management**:  
+  - In `apps/web/`, rely on **npm**.  
+  - In `db/`, manage dependencies for Prisma, etc.  
+  - In `edge-functions/`, keep separate but aligned package definitions if needed.  
+  - Avoid duplication or introducing conflicting packages across sub-directories.
+
+- **Shared Utilities**:  
+  - If a common utility is needed across sub-directories, check if the monorepo has a shared library structure. Otherwise, create or update instructions to ensure consistent usage.
+
+---
+
+## **5. Iterating on Customerly**
+
+1. **Read**: Before coding, **read** the relevant Markdown instructions in both the top-level (`markdowns/`) and your target directory.  
+2. **Implement**: Write code that **aligns** with the sub-directory’s approach (React for `apps/web/`, Prisma for `db/`, TypeScript for `edge-functions`).  
+3. **Document**: If you add or change functionality, **update** the relevant Markdown file to reflect your changes.  
+4. **Test**: Each sub-directory should have **its own** testing approach (e.g., `npm run test`, or custom scripts).  
+5. **Repeat**: Continue to refine code based on additional instructions or user feedback.
+
+---
+
+## **6. Summary**
+
+- **Always read the context in `markdowns/`** before starting any feature work.  
+- **Check the local Markdown** in each sub-directory for instructions unique to that part of the stack.  
+- **Maintain** consistent usage of frameworks, libraries, and naming conventions.  
+- **Document** and **test** thoroughly to keep the codebase stable and clear for all contributors.
+
+By following these instructions, you (the AI coding agent) will effectively **write and iterate** on the **Customerly** project—ensuring that the front-end (`apps/web/`), database logic (`db/`), and edge functions (`edge-functions/`) all remain in sync with the **customer-centric** vision of this Zendesk-like platform.

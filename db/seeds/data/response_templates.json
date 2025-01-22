@@ -1,0 +1,20 @@
+[
+    {
+        "id": "template-rate-limit",
+        "name": "Rate Limit Increase Request",
+        "content": "I understand you're hitting rate limits. Let me check your current usage patterns and see if we can optimize your API calls or if a limit increase is needed. Could you please provide:\n\n1. Your current API call patterns\n2. Expected growth in the next month\n3. Use case for these API calls\n\nThis will help me better assist you with a solution.",
+        "creator_id": "user-agent-alex",
+        "team_id": "team-tech",
+        "is_public": true,
+        "usage_count": 45
+    },
+    {
+        "id": "template-sso",
+        "name": "Enterprise SSO Setup",
+        "content": "I'll help you with the SSO configuration. To proceed, please ensure you have:\n\n1. Admin access to your identity provider\n2. Your identity provider's metadata XML or configuration details\n3. List of domains to be configured\n\nOnce you have these ready, we can proceed with the setup.",
+        "creator_id": "user-admin-liwei",
+        "team_id": "team-security",
+        "is_public": true,
+        "usage_count": 28
+    }
+]

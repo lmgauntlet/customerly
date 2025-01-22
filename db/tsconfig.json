@@ -1,0 +1,42 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "lib": [
+            "es2017",
+            "esnext.asynciterable"
+        ],
+        "moduleResolution": "node",
+        "outDir": "dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "types": [
+            "node"
+        ],
+        "noImplicitAny": true,
+        "allowJs": true,
+        "sourceMap": true,
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "node_modules/*"
+            ]
+        }
+    },
+    "ts-node": {
+        "transpileOnly": true,
+        "files": true,
+        "compilerOptions": {
+            "module": "commonjs"
+        }
+    },
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

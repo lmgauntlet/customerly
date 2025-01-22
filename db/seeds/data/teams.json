@@ -1,0 +1,55 @@
+[
+    {
+        "id": "team-tech",
+        "name": "Technical Support",
+        "description": "Core infrastructure and API support team",
+        "manager_id": "user-agent-alex",
+        "coverage_hours": {
+            "timezone": "UTC",
+            "shifts": [
+                {
+                    "name": "APAC",
+                    "hours": "22:00-06:00"
+                },
+                {
+                    "name": "EMEA",
+                    "hours": "06:00-14:00"
+                },
+                {
+                    "name": "AMER",
+                    "hours": "14:00-22:00"
+                }
+            ]
+        }
+    },
+    {
+        "id": "team-billing",
+        "name": "Billing Support",
+        "description": "Subscription and billing support",
+        "manager_id": "user-agent-nina",
+        "coverage_hours": {
+            "timezone": "UTC",
+            "hours": "09:00-17:00"
+        }
+    },
+    {
+        "id": "team-product",
+        "name": "Product Support",
+        "description": "Product features and usage assistance",
+        "manager_id": "user-agent-maria",
+        "coverage_hours": {
+            "timezone": "UTC",
+            "hours": "09:00-17:00"
+        }
+    },
+    {
+        "id": "team-security",
+        "name": "Security Team",
+        "description": "Security and compliance support",
+        "manager_id": "user-admin-liwei",
+        "coverage_hours": {
+            "timezone": "UTC",
+            "hours": "09:00-17:00"
+        }
+    }
+]

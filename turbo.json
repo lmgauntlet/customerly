@@ -1,0 +1,66 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        "**/.env.*local"
+    ],
+    "remoteCache": {
+        "signature": true
+    },
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "dist/**"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env",
+                ".env.local"
+            ],
+            "env": [
+                "NEXT_PUBLIC_SUPABASE_URL",
+                "NEXT_SUPABASE_SERVICE_ROLE_KEY",
+                "VERCEL",
+                "VERCEL_URL",
+                "TURBO_TEAM",
+                "TURBO_TOKEN"
+            ]
+        },
+        "lint": {
+            "dependsOn": [
+                "^lint"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "start": {
+            "cache": false,
+            "persistent": true
+        },
+        "test": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "coverage/**"
+            ]
+        },
+        "db:migrate": {
+            "cache": false
+        },
+        "db:seed": {
+            "cache": false
+        },
+        "db:reset": {
+            "cache": false
+        },
+        "clean": {
+            "cache": false
+        }
+    }
+}

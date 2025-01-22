@@ -1,0 +1,30 @@
+[
+    {
+        "id": "dm_001",
+        "date": "2024-02-15",
+        "team_id": "team-tech",
+        "metrics_type": "ticket_stats",
+        "metrics": {
+            "new_tickets": 3,
+            "resolved_tickets": 1,
+            "avg_response_time_minutes": 15,
+            "avg_resolution_time_minutes": 120,
+            "customer_satisfaction": 4.8
+        },
+        "created_at": "2024-02-15T23:59:59Z"
+    },
+    {
+        "id": "dm_002",
+        "date": "2024-02-15",
+        "team_id": "team-billing",
+        "metrics_type": "ticket_stats",
+        "metrics": {
+            "new_tickets": 1,
+            "resolved_tickets": 0,
+            "avg_response_time_minutes": 10,
+            "avg_resolution_time_minutes": null,
+            "customer_satisfaction": 4.5
+        },
+        "created_at": "2024-02-15T23:59:59Z"
+    }
+]

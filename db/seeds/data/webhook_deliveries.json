@@ -1,0 +1,25 @@
+[
+    {
+        "id": "whd_001",
+        "webhook_type": "ticket.created",
+        "payload": {
+            "ticket_id": "tick_001",
+            "title": "API Rate Limiting Issues in Production",
+            "status": "new",
+            "priority": "high"
+        },
+        "status": "delivered",
+        "created_at": "2024-02-15T10:00:00Z"
+    },
+    {
+        "id": "whd_002",
+        "webhook_type": "ticket.status_changed",
+        "payload": {
+            "ticket_id": "tick_001",
+            "old_status": "new",
+            "new_status": "in_progress"
+        },
+        "status": "delivered",
+        "created_at": "2024-02-15T10:15:00Z"
+    }
+]

@@ -1,0 +1,24 @@
+[
+    {
+        "id": "att_001",
+        "bucket_path": "tickets/tick_001/screenshot.png",
+        "filename": "api-rate-limit-error.png",
+        "content_type": "image/png",
+        "size": 245678,
+        "entity_type": "ticket",
+        "entity_id": "tick_001",
+        "uploader_id": "user-customer-liwei",
+        "created_at": "2024-02-15T10:00:00Z"
+    },
+    {
+        "id": "att_002",
+        "bucket_path": "tickets/tick_002/logs.txt",
+        "filename": "kubernetes-cluster-logs.txt",
+        "content_type": "text/plain",
+        "size": 156789,
+        "entity_type": "ticket",
+        "entity_id": "tick_002",
+        "uploader_id": "user-customer-john",
+        "created_at": "2024-02-15T09:00:00Z"
+    }
+]

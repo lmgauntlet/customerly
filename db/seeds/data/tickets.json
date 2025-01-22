@@ -1,0 +1,112 @@
+[
+    {
+        "id": "tick_001",
+        "title": "API Rate Limiting Issues in Production",
+        "description": "We're hitting rate limits in production much earlier than expected. Need to understand if this is a configuration issue or if we need to upgrade our plan. Current limit is 1000 req/min but we're getting throttled at ~800.",
+        "status": "in_progress",
+        "priority": "high",
+        "source": "api",
+        "customer_id": "user-customer-liwei",
+        "assigned_agent_id": "agent-alex",
+        "team_id": "team-tech",
+        "sla_deadline": "2024-02-15T14:00:00Z",
+        "tags": [
+            "api",
+            "rate-limit",
+            "production",
+            "performance"
+        ],
+        "metadata": {
+            "plan_type": "business",
+            "current_usage": "800rpm",
+            "environment": "production"
+        }
+    },
+    {
+        "id": "tick_002",
+        "title": "Kubernetes Cluster Autoscaling Not Working",
+        "description": "Cluster isn't automatically scaling despite high load. Running v1.24.3 with default autoscaling configuration. CPU utilization at 85% but no new nodes being added.",
+        "status": "in_progress",
+        "priority": "urgent",
+        "source": "web",
+        "customer_id": "user-customer-john",
+        "assigned_agent_id": "agent-alex",
+        "team_id": "team-tech",
+        "sla_deadline": "2024-02-15T12:00:00Z",
+        "tags": [
+            "kubernetes",
+            "autoscaling",
+            "production",
+            "infrastructure"
+        ],
+        "metadata": {
+            "cluster_version": "1.24.3",
+            "node_count": "5",
+            "region": "us-west-2"
+        }
+    },
+    {
+        "id": "tick_003",
+        "title": "Enterprise SSO Integration Failed",
+        "description": "Unable to configure Okta SSO integration. Getting 'Invalid configuration' error when testing the connection. Using SAML 2.0 protocol.",
+        "status": "new",
+        "priority": "high",
+        "source": "email",
+        "customer_id": "user-customer-carlos",
+        "assigned_agent_id": "agent-nina",
+        "team_id": "team-security",
+        "tags": [
+            "sso",
+            "okta",
+            "security",
+            "enterprise"
+        ],
+        "metadata": {
+            "integration_type": "okta",
+            "protocol": "saml2",
+            "enterprise_plan": true
+        }
+    },
+    {
+        "id": "tick_004",
+        "title": "Billing Cycle Change Request",
+        "description": "Need to change billing cycle from monthly to annual and apply enterprise discount discussed with sales team.",
+        "status": "open",
+        "priority": "medium",
+        "source": "web",
+        "customer_id": "user-customer-carlos",
+        "assigned_agent_id": "agent-nina",
+        "team_id": "team-billing",
+        "tags": [
+            "billing",
+            "enterprise",
+            "contract"
+        ],
+        "metadata": {
+            "current_plan": "business",
+            "target_plan": "enterprise",
+            "annual_value": "120000"
+        }
+    },
+    {
+        "id": "tick_005",
+        "title": "Data Migration Tool Timing Out",
+        "description": "The data migration tool keeps timing out when trying to transfer >500GB. Need guidance on handling large datasets.",
+        "status": "new",
+        "priority": "high",
+        "source": "web",
+        "customer_id": "user-customer-john",
+        "assigned_agent_id": "agent-maria",
+        "team_id": "team-tech",
+        "tags": [
+            "data-migration",
+            "performance",
+            "timeout"
+        ],
+        "metadata": {
+            "data_size": "500GB",
+            "source_type": "postgresql",
+            "target_type": "managed-db"
+        }
+    }
+]

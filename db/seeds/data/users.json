@@ -1,0 +1,84 @@
+[
+    {
+        "id": "user-admin-liwei",
+        "email": "liweimao+admin@gmail.com",
+        "name": "Liwei Admin",
+        "role": "admin",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true,
+                "push": true
+            }
+        }
+    },
+    {
+        "id": "user-customer-liwei",
+        "email": "liweimao+customer@gmail.com",
+        "name": "Liwei Customer",
+        "role": "customer",
+        "preferences": {
+            "notifications": {
+                "email": true
+            }
+        }
+    },
+    {
+        "id": "user-agent-alex",
+        "email": "alex.tech@cloudstack.com",
+        "name": "Alex Chen",
+        "role": "agent",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true
+            }
+        }
+    },
+    {
+        "id": "user-agent-maria",
+        "email": "maria.tech@cloudstack.com",
+        "name": "Maria Rodriguez",
+        "role": "agent",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true
+            }
+        }
+    },
+    {
+        "id": "user-agent-nina",
+        "email": "nina.billing@cloudstack.com",
+        "name": "Nina Patel",
+        "role": "agent",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true
+            }
+        }
+    },
+    {
+        "id": "user-customer-john",
+        "email": "john@scaleup.io",
+        "name": "John Mitchell",
+        "role": "customer",
+        "preferences": {
+            "notifications": {
+                "email": true
+            }
+        }
+    },
+    {
+        "id": "user-customer-carlos",
+        "email": "carlos@megacorp.com",
+        "name": "Carlos Santos",
+        "role": "customer",
+        "preferences": {
+            "notifications": {
+                "email": true
+            }
+        }
+    }
+]

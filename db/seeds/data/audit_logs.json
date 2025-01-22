@@ -1,0 +1,30 @@
+[
+    {
+        "id": "audit_001",
+        "entity_type": "ticket",
+        "entity_id": "tick_001",
+        "action": "status_update",
+        "actor_id": "user-agent-alex",
+        "changes": {
+            "status": {
+                "from": "new",
+                "to": "in_progress"
+            }
+        },
+        "created_at": "2024-02-15T10:15:00Z"
+    },
+    {
+        "id": "audit_002",
+        "entity_type": "ticket",
+        "entity_id": "tick_002",
+        "action": "agent_assigned",
+        "actor_id": "user-agent-alex",
+        "changes": {
+            "assigned_agent_id": {
+                "from": null,
+                "to": "agent-alex"
+            }
+        },
+        "created_at": "2024-02-15T09:05:00Z"
+    }
+]

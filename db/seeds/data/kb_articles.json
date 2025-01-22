@@ -1,0 +1,24 @@
+[
+    {
+        "id": "art-rate-limits",
+        "title": "Understanding API Rate Limits",
+        "content": "# API Rate Limits Explained\n\nOur API implements rate limiting to ensure fair usage and platform stability. This guide explains how our rate limits work and how to optimize your integration.\n\n## Rate Limit Tiers\n- Standard: 1,000 requests/minute\n- Business: 5,000 requests/minute\n- Enterprise: Custom limits\n\n## Best Practices\n1. Implement exponential backoff\n2. Use bulk endpoints where possible\n3. Cache responses appropriately\n\n## Monitoring\nUse the X-RateLimit-* headers to track your usage...",
+        "category_id": "cat_005",
+        "author_id": "user-agent-alex",
+        "status": "published",
+        "view_count": 1250,
+        "helpful_count": 89,
+        "not_helpful_count": 3
+    },
+    {
+        "id": "art-k8s-guide",
+        "title": "Kubernetes Integration Guide",
+        "content": "# Kubernetes Integration\n\nThis guide covers setting up and optimizing our service with Kubernetes.\n\n## Autoscaling Configuration\n```yaml\napiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\n...\n```\n\n## Best Practices\n1. Resource requests and limits\n2. Monitoring setup\n3. High availability configuration",
+        "category_id": "cat_001",
+        "author_id": "user-agent-maria",
+        "status": "published",
+        "view_count": 892,
+        "helpful_count": 67,
+        "not_helpful_count": 5
+    }
+]

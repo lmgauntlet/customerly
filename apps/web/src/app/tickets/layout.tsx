@@ -78,9 +78,9 @@ export default function TicketsLayout({
     }
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="fixed inset-0 flex bg-background">
             {/* Main Left Panel - Primary Navigation */}
-            <div className="w-64 flex flex-col border-r border-border bg-card">
+            <div className="w-[240px] flex flex-col border-r border-border bg-card">
                 <div className="flex h-16 items-center justify-between border-b border-border px-4">
                     <Link href="/" className="text-xl font-bold text-primary">
                         Customerly
@@ -95,7 +95,7 @@ export default function TicketsLayout({
                 </div>
 
                 {/* Main Navigation Items */}
-                <nav className="flex-1 space-y-1 p-4">
+                <nav className="space-y-1 p-4">
                     {mainNavItems.map((item) => (
                         <Link
                             key={item.href}
@@ -126,11 +126,11 @@ export default function TicketsLayout({
             </div>
 
             {/* Secondary Left Panel - Ticket Views */}
-            <div className="w-64 flex flex-col border-r border-border bg-card/50">
+            <div className="w-[240px] flex flex-col border-r border-border bg-card/50">
                 <div className="flex h-16 items-center px-6 border-b border-border">
                     <h2 className="text-lg font-semibold">Views</h2>
                 </div>
-                <nav className="flex-1 p-4">
+                <nav className="p-4">
                     <div className="space-y-1">
                         {ticketViews.map((view) => (
                             <button
@@ -158,27 +158,10 @@ export default function TicketsLayout({
                 </nav>
             </div>
 
-            {/* Main Content - Ticket List */}
-            <div className="flex flex-1 flex-col border-r border-border">
-                <div className="flex h-16 items-center justify-between border-b border-border px-6">
-                    <h1 className="text-lg font-semibold">Inbox</h1>
-                </div>
-                <div className="flex-1 overflow-auto p-6">
-                    {children}
-                </div>
-            </div>
-
-            {/* Right Panel - Ticket Details */}
-            <div className="w-96 bg-card">
-                <div className="flex h-16 items-center border-b border-border px-6">
-                    <h2 className="text-lg font-semibold">Ticket Details</h2>
-                </div>
-                <div className="p-6">
-                    <div className="text-sm text-muted-foreground">
-                        Select a ticket to view details
-                    </div>
-                </div>
+            {/* Main Content Area */}
+            <div className="flex-1">
+                {children}
             </div>
         </div>
     )
-} 
+}

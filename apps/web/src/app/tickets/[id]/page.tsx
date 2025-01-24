@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { type Ticket, ticketsService } from '@/services/tickets'
 import { TicketDetails } from '@/components/tickets/TicketDetails'
 import { useParams } from 'next/navigation'
@@ -9,6 +9,20 @@ export default function TicketPage() {
     const params = useParams()
     const [ticket, setTicket] = useState<Ticket>()
     const [loading, setLoading] = useState(true)
+
+    const loadTicket = useCallback(async () => {
+        try {
+            setLoading(true)
+            // Ensure params.id is a string
+            const ticketId = Array.isArray(params.id) ? params.id[0] : params.id
+            const data = await ticketsService.getTicketById(ticketId)
+            setTicket(data)
+        } catch (error) {
+            console.error('Failed to load ticket:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [params.id])
 
     useEffect(() => {
         loadTicket()
@@ -23,21 +37,7 @@ export default function TicketPage() {
         return () => {
             channel.unsubscribe()
         }
-    }, [params.id])
-
-    const loadTicket = async () => {
-        try {
-            setLoading(true)
-            // Ensure params.id is a string
-            const ticketId = Array.isArray(params.id) ? params.id[0] : params.id
-            const data = await ticketsService.getTicketById(ticketId)
-            setTicket(data)
-        } catch (error) {
-            console.error('Failed to load ticket:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    }, [params.id, loadTicket])
 
     if (loading) {
         return (

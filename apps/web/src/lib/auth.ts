@@ -1,18 +1,23 @@
 import { supabase } from './supabase'
+import type { User as AuthUser } from '@supabase/supabase-js'
 
-export interface DbUser {
+export interface User {
   id: string
   email: string
   name: string | null
   avatarUrl: string | null
+  role: 'customer' | 'agent' | 'admin'
+  preferences: Record<string, unknown>
+  created_at: string
+  updated_at: string
 }
 
 /**
- * Gets the current authenticated user's database record
- * @throws Error if user is not logged in or database record not found
- * @returns The user's database record
+ * Gets the current authenticated user's record from the database
+ * @throws Error if user is not logged in or not found in database
+ * @returns The user record
  */
-export async function getCurrentDbUser(): Promise<DbUser> {
+export async function getCurrentUser(): Promise<User> {
   // Get current session
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   if (sessionError) throw sessionError
@@ -20,16 +25,26 @@ export async function getCurrentDbUser(): Promise<DbUser> {
     throw new Error('You must be logged in')
   }
 
+  return getUser(session.user)
+}
+
+/**
+ * Gets a user's record from their auth user data
+ * @param authUser The Supabase auth user
+ * @returns The user record from the database
+ * @throws Error if user not found in database
+ */
+export async function getUser(authUser: AuthUser): Promise<User> {
   // Get the user record from our database
-  const { data: dbUser, error: userError } = await supabase
+  const { data: user, error: userError } = await supabase
     .from('users')
-    .select('id, email, name, avatarUrl:avatar_url')
-    .eq('email', session.user.email)
+    .select('id, email, name, avatarUrl:avatar_url, role, preferences, created_at, updated_at')
+    .eq('email', authUser.email)
     .single()
 
-  if (userError || !dbUser) {
+  if (userError || !user) {
     throw new Error('Failed to find user record')
   }
 
-  return dbUser
+  return user
 }

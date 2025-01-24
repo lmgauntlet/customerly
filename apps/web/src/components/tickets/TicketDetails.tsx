@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { type Ticket, ticketsService } from '@/services/tickets'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
+import { getUser } from '@/lib/auth'
 
 interface Props {
     ticket?: Ticket
@@ -35,12 +36,13 @@ export function TicketDetails({ ticket }: Props) {
             setSending(true)
             setError(null)
 
-            const { data: { user }, error } = await supabase.auth.getUser()
+            const { data: { user: authUser }, error } = await supabase.auth.getUser()
             if (error) throw error
-            if (!user) {
+            if (!authUser) {
                 throw new Error('You must be logged in to send messages')
             }
 
+            const user = await getUser(authUser)
             await ticketsService.addMessage({
                 ticket_id: ticket.id,
                 content: replyContent,

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
 import { supabase } from '@/lib/supabase'
-import { getCurrentDbUser, type DbUser } from '@/lib/auth'
+import { getCurrentUser, type User } from '@/lib/auth'
 
 interface NavItem {
     label: string
@@ -70,13 +70,13 @@ export default function TicketsLayout({
     children: React.ReactNode
 }) {
     const [selectedView, setSelectedView] = useState('All')
-    const [currentUser, setCurrentUser] = useState<DbUser | null>(null)
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
     const router = useRouter()
 
     useEffect(() => {
         const loadUser = async () => {
             try {
-                const user = await getCurrentDbUser()
+                const user = await getCurrentUser()
                 setCurrentUser(user)
             } catch (error) {
                 console.error('Failed to load user:', error)
@@ -93,7 +93,7 @@ export default function TicketsLayout({
                 router.push('/login')
             } else if (event === 'SIGNED_IN' && session) {
                 try {
-                    const user = await getCurrentDbUser()
+                    const user = await getCurrentUser()
                     setCurrentUser(user)
                 } catch (error) {
                     console.error('Failed to load user:', error)

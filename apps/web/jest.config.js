@@ -7,17 +7,10 @@ const createJestConfig = nextJest({
 
 // Add any custom config to be passed to Jest
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  setupFiles: ['<rootDir>/jest.polyfills.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  testEnvironment: 'jsdom',
-  transform: {
-    '^.+\\.(t|j)sx?$': '@swc/jest',
-  },
-  testEnvironmentOptions: {
-    customExportConditions: [''],
   },
 }
 

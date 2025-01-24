@@ -1,118 +1,218 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { headers, cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { createServerClient } from '@/utils/supabase'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { createUserRecord } from './actions'
 
-export default function Login({
-  searchParams,
-}: {
-  searchParams: { message: string }
-}) {
-  const signIn = async (formData: FormData) => {
-    'use server'
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [session, setSession] = useState<any>(null)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+  useEffect(() => {
+    async function authenticate() {
+      try {
+        const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+        console.log('Auth user:', authUser)
+        if (error) {
+          console.error('Error during sign-in:', error)
+          throw error
+        }
 
-    if (error) {
-      return redirect('/login?message=Could not authenticate user')
+        if (authUser) {
+          setSession(authUser)
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Authentication error:', error)
+      }
     }
+    authenticate()
+  }, [supabase, router, email, password])
 
-    return redirect('/')
+  console.log('Rendering with session:', session)
+
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      console.log('Auth user:', authUser)
+      if (error) {
+        console.error('Error during sign-in:', error)
+        throw error
+      }
+
+      // Get or create the database user
+      if (authUser) {
+        const result = await createUserRecord(authUser.id, authUser.email!)
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to get or create user record')
+        }
+      }
+
+      router.refresh()
+      router.push('/tickets')
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const signUp = async (formData: FormData) => {
-    'use server'
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
-    const origin = headers().get('origin')
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    try {
+      const { data: { user: authUser }, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      })
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${origin}/api/auth/callback`,
-      },
-    })
+      if (error) throw error
 
-    if (error) {
-      return redirect('/login?message=Could not authenticate user')
+      // Create user record in our database
+      if (authUser) {
+        const result = await createUserRecord(authUser.id, authUser.email!)
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create user record')
+        }
+      }
+
+      setError('Check your email to continue sign in process')
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    return redirect('/login?message=Check email to continue sign in process')
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.refresh()
+  }
+
+  if (session) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-24">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Already Signed In
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              You are already signed in. You can return home or sign out.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <Link href="/">
+              <Button className="w-full">Return Home</Button>
+            </Link>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex w-full flex-1 flex-col justify-center gap-2 px-8 sm:max-w-md">
-      <Link
-        href="/"
-        className="bg-btn-background hover:bg-btn-background-hover group absolute left-8 top-8 flex items-center rounded-md px-4 py-2 text-sm text-foreground no-underline"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
-        >
-          <polyline points="15 18 9 12 15 6" />
-        </svg>{' '}
-        Back
-      </Link>
+    <div className="flex min-h-screen flex-col items-center justify-center p-24">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="flex justify-between">
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Back
+          </Link>
+        </div>
 
-      <form
-        className="flex w-full flex-1 flex-col justify-center gap-2 text-foreground animate-in"
-        action={signIn}
-      >
-        <label className="text-md" htmlFor="email">
-          Email
-        </label>
-        <input
-          className="mb-6 rounded-md border bg-inherit px-4 py-2"
-          name="email"
-          placeholder="you@example.com"
-          required
-        />
-        <label className="text-md" htmlFor="password">
-          Password
-        </label>
-        <input
-          className="mb-6 rounded-md border bg-inherit px-4 py-2"
-          type="password"
-          name="password"
-          placeholder="••••••••"
-          required
-        />
-        <button className="mb-2 rounded-md bg-green-700 px-4 py-2 text-foreground">
-          Sign In
-        </button>
-        <button
-          formAction={signUp}
-          className="mb-2 rounded-md border border-foreground/20 px-4 py-2 text-foreground"
-        >
-          Sign Up
-        </button>
-        {searchParams?.message && (
-          <p className="mt-4 bg-foreground/10 p-4 text-center text-foreground">
-            {searchParams.message}
+        <div className="space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Enter your credentials to continue
           </p>
-        )}
-      </form>
+        </div>
+
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && (
+            <Alert variant={error.includes('Check your email') ? 'default' : 'destructive'}>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Loading...' : 'Sign In'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleSignUp}
+              disabled={loading}
+            >
+              Create Account
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

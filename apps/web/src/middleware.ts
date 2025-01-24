@@ -1,65 +1,41 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Create a response and supabase client
-  const response = NextResponse.next()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name) => request.cookies.get(name)?.value,
-        set: (name, value, options) => {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove: (name, options) => {
-          response.cookies.delete(name)
-        },
-      },
-    },
-  )
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
 
-  // Refresh session if expired
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Get the pathname
-  const { pathname } = request.nextUrl
-
-  // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/signup']
-  if (publicRoutes.includes(pathname)) {
-    return response
+  // Auth pages are public
+  const isAuthPage = req.nextUrl.pathname === '/login'
+  if (isAuthPage) {
+    if (session) {
+      // If user is signed in, redirect to tickets
+      return NextResponse.redirect(new URL('/tickets', req.url))
+    }
+    return res
   }
 
-  // Check if user is authenticated
+  // Home page is public
+  const isHomePage = req.nextUrl.pathname === '/'
+  if (isHomePage) {
+    if (session) {
+      // If user is signed in, redirect to tickets
+      return NextResponse.redirect(new URL('/tickets', req.url))
+    }
+    return res
+  }
+
+  // If no session and not a public page, redirect to login
   if (!session) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // Get user role from session metadata
-  const role = session.user?.user_metadata?.role
-
-  // Role-based routing
-  if (role === 'admin' || role === 'agent') {
-    // Redirect to agent dashboard if trying to access customer routes
-    if (pathname.startsWith('/dashboard')) {
-      return NextResponse.redirect(new URL('/agent', request.url))
-    }
-  } else {
-    // Customer role - redirect to dashboard if trying to access agent routes
-    if (pathname.startsWith('/agent')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
-
-  return response
+  return res
 }
 
 export const config = {

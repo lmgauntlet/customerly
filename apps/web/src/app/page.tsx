@@ -1,46 +1,75 @@
-import { cookies } from 'next/headers'
-import { createServerClient } from '@/utils/supabase'
-import Link from 'next/link'
+'use client'
 
-export default async function LandingPage() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+
+export default function LandingPage() {
+  const [session, setSession] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClientComponentClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    async function getSession() {
+      const { data: { session } } = await supabase.auth.getSession()
+      setSession(session)
+      if (session) {
+        router.push('/tickets')
+      }
+      setLoading(false)
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session)
+      })
+
+      return () => subscription.unsubscribe()
+    }
+    getSession()
+  }, [supabase, router])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setSession(null)
+    router.refresh()
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  console.log('Rendering with session:', session?.user?.email) // Debug log
 
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-xl font-bold">
-              CloudStack Support
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 max-w-screen-2xl items-center">
+          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="inline-block font-bold">Customerly</span>
             </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            {session ? (
-              <Link
-                href={
-                  session.user.user_metadata.role === 'customer'
-                    ? '/dashboard'
-                    : '/agent'
-                }
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                {session.user.user_metadata.role === 'customer'
-                  ? 'My Tickets'
-                  : 'Support Dashboard'}
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Sign In
-              </Link>
-            )}
+            <nav className="flex items-center">
+              {session?.user ? (
+                <Button
+                  variant="ghost"
+                  className="mr-6"
+                  onClick={handleSignOut}
+                >
+                  Sign Out ({session.user.email})
+                </Button>
+              ) : (
+                <Link href="/login">
+                  <Button variant="ghost" className="mr-6">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </nav>
           </div>
         </div>
       </header>
@@ -55,28 +84,20 @@ export default async function LandingPage() {
         <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl">
-              Enterprise Cloud Support{' '}
+              Customer Support{' '}
               <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 That Scales
               </span>
             </h1>
             <p className="mb-8 text-xl text-muted-foreground">
-              24/7 expert support for your cloud infrastructure. From Kubernetes
-              to billing, our specialized teams ensure your systems run
-              smoothly.
+              24/7 expert support for your business. Our specialized teams ensure your customers are always taken care of.
             </p>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
                 href="/login"
                 className="w-full rounded-lg bg-primary px-8 py-4 text-lg font-medium text-primary-foreground shadow-lg transition-all hover:bg-primary/90 sm:w-auto"
               >
-                Open Support Ticket
-              </Link>
-              <Link
-                href="/status"
-                className="w-full rounded-lg border border-input bg-background px-8 py-4 text-lg font-medium shadow-lg transition-all hover:bg-accent hover:text-accent-foreground sm:w-auto"
-              >
-                System Status
+                Get Started
               </Link>
             </div>
           </div>

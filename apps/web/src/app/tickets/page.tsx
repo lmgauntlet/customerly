@@ -126,7 +126,7 @@ export default function TicketsPage() {
                                         <div className="flex items-center justify-between mb-1">
                                             <h3 className="font-medium truncate">{ticket.title}</h3>
                                             <span className="text-xs text-muted-foreground ml-2">
-                                                {new Date(ticket.created_at).toLocaleString()}
+                                                {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'No date'}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2 mb-2">
@@ -137,7 +137,7 @@ export default function TicketsPage() {
                                                     <Avatar
                                                         name={ticket.assignedAgent.user.name}
                                                         email={ticket.assignedAgent.user.email}
-                                                        avatarUrl={ticket.assignedAgent.user.avatar_url}
+                                                        avatarUrl={ticket.assignedAgent.user.avatarUrl}
                                                         size="sm"
                                                     />
                                                     {ticket.assignedAgent.user.name}

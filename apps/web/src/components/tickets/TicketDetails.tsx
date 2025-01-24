@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { PriorityBadge } from '@/components/tickets/PriorityBadge'
 import { Avatar } from '@/components/ui/avatar'
-import { type Ticket, ticketsService } from '@/services/tickets'
+import { type Ticket, type TicketMessage, ticketsService } from '@/services/tickets'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { getUser } from '@/lib/auth'
@@ -20,6 +20,34 @@ export function TicketDetails({ ticket }: Props) {
     const [sending, setSending] = useState(false)
     const [isInternalNote, setIsInternalNote] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [messages, setMessages] = useState<TicketMessage[]>(ticket?.messages || [])
+
+    useEffect(() => {
+        if (!ticket) return
+
+        // Initialize messages from ticket
+        setMessages(ticket.messages || [])
+
+        // Subscribe to message updates
+        const subscription = ticketsService.subscribeToMessages(ticket.id, (message) => {
+            setMessages(prevMessages => {
+                // Check if message already exists
+                const exists = prevMessages.some(m => m.id === message.id)
+                if (exists) {
+                    // Update existing message
+                    return prevMessages.map(m => m.id === message.id ? message : m)
+                } else {
+                    // Add new message
+                    return [...prevMessages, message]
+                }
+            })
+        })
+
+        // Cleanup subscription on unmount or when ticket changes
+        return () => {
+            subscription.unsubscribe()
+        }
+    }, [ticket?.id])
 
     if (!ticket) {
         return (
@@ -81,14 +109,14 @@ export function TicketDetails({ ticket }: Props) {
                             <Avatar
                                 name={ticket.customer.name}
                                 email={ticket.customer.email}
-                                avatarUrl={ticket.customer.avatar_url}
+                                avatarUrl={ticket.customer.avatarUrl}
                                 size="md"
                             />
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-medium">{ticket.customer.name}</span>
                                     <span className="text-xs text-muted-foreground">
-                                        {new Date(ticket.created_at).toLocaleString()}
+                                        {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'No date'}
                                     </span>
                                 </div>
                                 <div className="prose prose-sm max-w-none">
@@ -99,7 +127,7 @@ export function TicketDetails({ ticket }: Props) {
 
                         {/* Messages */}
                         <div className="space-y-6">
-                            {ticket.messages?.map((message) => (
+                            {messages.map((message) => (
                                 <div 
                                     key={message.id} 
                                     className={cn(
@@ -110,7 +138,7 @@ export function TicketDetails({ ticket }: Props) {
                                     <Avatar
                                         name={message.sender?.name || 'User'}
                                         email={message.sender?.email || ''}
-                                        avatarUrl={message.sender?.avatar_url}
+                                        avatarUrl={message.sender?.avatarUrl}
                                         size="md"
                                     />
                                     <div className="flex-1">
@@ -122,7 +150,7 @@ export function TicketDetails({ ticket }: Props) {
                                                 {message.sender?.name || message.sender?.email}
                                             </span>
                                             <span className="text-xs text-muted-foreground">
-                                                {new Date(message.created_at).toLocaleString()}
+                                                {message.created_at ? new Date(message.created_at).toLocaleString() : 'No date'}
                                             </span>
                                             {message.is_internal && (
                                                 <span className="text-xs text-[#8B5D23]">
@@ -159,7 +187,7 @@ export function TicketDetails({ ticket }: Props) {
                     )}
                     <div className="flex items-center gap-3 mb-4">
                         <Button
-                            variant={isInternalNote ? "default" : "outline"}
+                            variant={isInternalNote ? "outline" : "default"}
                             size="sm"
                             onClick={() => setIsInternalNote(false)}
                             className="relative"
@@ -170,7 +198,7 @@ export function TicketDetails({ ticket }: Props) {
                             Reply
                         </Button>
                         <Button
-                            variant={isInternalNote ? "outline" : "default"}
+                            variant={isInternalNote ? "default" : "outline"}
                             size="sm"
                             onClick={() => setIsInternalNote(true)}
                             className="relative"
@@ -223,7 +251,7 @@ export function TicketDetails({ ticket }: Props) {
                             <Avatar
                                 name={ticket.customer?.name || 'Customer'}
                                 email={ticket.customer?.email || ''}
-                                avatarUrl={ticket.customer?.avatar_url}
+                                avatarUrl={ticket.customer?.avatarUrl}
                                 size="lg"
                             />
                             <h4 className="font-medium mt-2">{ticket.customer?.name}</h4>
@@ -274,14 +302,14 @@ export function TicketDetails({ ticket }: Props) {
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span>{new Date(ticket.created_at).toLocaleString()}</span>
+                                <span>{ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'No date'}</span>
                             </div>
                             {ticket.sla_deadline && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>SLA: {new Date(ticket.sla_deadline).toLocaleString()}</span>
+                                    <span>SLA: {ticket.sla_deadline ? new Date(ticket.sla_deadline).toLocaleString() : 'No date'}</span>
                                 </div>
                             )}
                             <div className="flex items-center gap-2">

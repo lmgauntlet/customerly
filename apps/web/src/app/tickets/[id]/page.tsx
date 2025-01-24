@@ -9,22 +9,23 @@ export default function TicketPage() {
     const params = useParams()
     const [ticket, setTicket] = useState<Ticket>()
     const [loading, setLoading] = useState(true)
-
-    const loadTicket = useCallback(async () => {
-        try {
-            setLoading(true)
-            // Ensure params.id is a string
-            const ticketId = Array.isArray(params.id) ? params.id[0] : params.id
-            const data = await ticketsService.getTicketById(ticketId)
-            setTicket(data)
-        } catch (error) {
-            console.error('Failed to load ticket:', error)
-        } finally {
-            setLoading(false)
-        }
-    }, [params.id])
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
+        const loadTicket = async () => {
+            try {
+                setLoading(true)
+                // Ensure params.id is a string
+                const ticketId = Array.isArray(params.id) ? params.id[0] : params.id
+                const data = await ticketsService.getTicket(ticketId)
+                setTicket(data)
+            } catch (error) {
+                console.error('Failed to load ticket:', error)
+                setError('Failed to load ticket')
+            } finally {
+                setLoading(false)
+            }
+        }
         loadTicket()
 
         // Subscribe to ticket updates
@@ -37,7 +38,7 @@ export default function TicketPage() {
         return () => {
             channel.unsubscribe()
         }
-    }, [params.id, loadTicket])
+    }, [params.id])
 
     if (loading) {
         return (
@@ -45,6 +46,10 @@ export default function TicketPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         )
+    }
+
+    if (error) {
+        return <div>{error}</div>
     }
 
     if (!ticket) {

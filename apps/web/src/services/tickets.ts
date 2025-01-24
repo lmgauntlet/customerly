@@ -1,4 +1,5 @@
-import { createBrowserClient } from '@/utils/supabase'
+import { supabase } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 export interface Ticket {
     id: string
@@ -8,20 +9,18 @@ export interface Ticket {
     priority: 'low' | 'medium' | 'high' | 'urgent'
     source: 'email' | 'web' | 'chat' | 'api' | 'phone'
     customer_id: string
-    team_id?: string
     assigned_agent_id?: string
+    team_id?: string
     sla_deadline?: string
-    first_response_at?: string
-    resolved_at?: string
     tags: string[]
-    metadata?: Record<string, any>
-    created_at: string
-    updated_at: string
+    metadata: Record<string, unknown>
+    created_at?: string
+    updated_at?: string
     customer: {
         id: string
         name: string
         email: string
-        avatar_url?: string
+        avatarUrl?: string
     }
     team?: {
         id: string
@@ -32,7 +31,7 @@ export interface Ticket {
         user: {
             name: string
             email: string
-            avatar_url?: string
+            avatarUrl?: string
         }
     }
     messages?: TicketMessage[]
@@ -41,70 +40,137 @@ export interface Ticket {
 export interface TicketMessage {
     id: string
     ticket_id: string
-    sender_id: string
     content: string
+    sender_id: string
     is_internal: boolean
     attachments: string[]
-    created_at: string
-    updated_at: string
-    sender: {
+    created_at?: string
+    updated_at?: string
+    sender?: {
         id: string
         name: string
         email: string
-        avatar_url?: string
+        avatarUrl: string
     }
 }
 
 export const ticketsService = {
-    async getTickets() {
-        const supabase = createBrowserClient()
-        const { data: tickets, error } = await supabase
+    async createTicket(data: Omit<Ticket, 'id' | 'created_at' | 'updated_at'>): Promise<Ticket> {
+        const ticket: Ticket = {
+            id: uuidv4(),
+            ...data
+        }
+
+        const { data: createdTicket, error } = await supabase
             .from('tickets')
+            .insert(ticket)
             .select(`
                 *,
-                customer:users!tickets_customer_id_fkey(id, name, email, avatar_url),
+                customer:users!tickets_customer_id_fkey(id, name, email, avatarUrl:avatar_url),
                 team:teams!tickets_team_id_fkey(id, name),
                 assignedAgent:agents!tickets_assigned_agent_id_fkey(
                     id,
                     user:users!agents_user_id_fkey(
                         name,
                         email,
-                        avatar_url
+                        avatarUrl:avatar_url
                     )
                 ),
                 messages:ticket_messages(
                     *,
-                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
+                    sender:users!ticket_messages_sender_id_fkey(
+                        id, 
+                        name, 
+                        email, 
+                        avatarUrl:avatar_url
+                    )
                 )
             `)
-            .order('created_at', { ascending: false })
+            .single()
 
         if (error) {
             throw error
         }
 
-        return tickets as Ticket[]
+        return createdTicket
     },
 
-    async getTicketById(id: string) {
-        const supabase = createBrowserClient()
-        const { data: ticket, error } = await supabase
-            .from('tickets')
+    async addMessage(data: Omit<TicketMessage, 'id' | 'created_at' | 'updated_at' | 'sender'>): Promise<TicketMessage> {
+        const message: Omit<TicketMessage, 'created_at' | 'updated_at' | 'sender'> = {
+            id: uuidv4(),
+            ...data
+        }
+
+        const { data: createdMessage, error } = await supabase
+            .from('ticket_messages')
+            .insert(message)
             .select(`
                 *,
-                customer:users!tickets_customer_id_fkey(id, name, email, avatar_url),
+                sender:users!ticket_messages_sender_id_fkey(
+                    id, 
+                    name, 
+                    email, 
+                    avatarUrl:avatar_url
+                )
+            `)
+            .single()
+
+        if (error) {
+            throw error
+        }
+
+        return createdMessage
+    },
+
+    async updateTicket(id: string, data: Partial<Omit<Ticket, 'id' | 'created_at' | 'updated_at'>>): Promise<Ticket> {
+        const { data: updatedTicket, error } = await supabase
+            .from('tickets')
+            .update(data)
+            .eq('id', id)
+            .select(`
+                *,
+                customer:users!tickets_customer_id_fkey(id, name, email, avatarUrl:avatar_url),
                 team:teams!tickets_team_id_fkey(id, name),
                 assignedAgent:agents!tickets_assigned_agent_id_fkey(
                     id,
                     user:users!agents_user_id_fkey(
                         name,
                         email,
-                        avatar_url
+                        avatarUrl:avatar_url
                     )
                 ),
                 messages:ticket_messages(
                     *,
-                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
+                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatarUrl:avatar_url)
+                )
+            `)
+            .single()
+
+        if (error) {
+            throw error
+        }
+
+        return updatedTicket
+    },
+
+    async getTicket(id: string): Promise<Ticket> {
+        const { data: ticket, error } = await supabase
+            .from('tickets')
+            .select(`
+                *,
+                customer:users!tickets_customer_id_fkey(id, name, email, avatarUrl:avatar_url),
+                team:teams!tickets_team_id_fkey(id, name),
+                assignedAgent:agents!tickets_assigned_agent_id_fkey(
+                    id,
+                    user:users!agents_user_id_fkey(
+                        name,
+                        email,
+                        avatarUrl:avatar_url
+                    )
+                ),
+                messages:ticket_messages(
+                    *,
+                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatarUrl:avatar_url)
                 )
             `)
             .eq('id', id)
@@ -114,74 +180,42 @@ export const ticketsService = {
             throw error
         }
 
-        return ticket as Ticket
+        return ticket
     },
 
-    async createTicket(ticket: Partial<Ticket>) {
-        const supabase = createBrowserClient()
-        const { data, error } = await supabase
+    async getTickets(): Promise<Ticket[]> {
+        const { data: tickets, error } = await supabase
             .from('tickets')
-            .insert([ticket])
-            .select()
-
-        if (error) {
-            throw error
-        }
-
-        return data[0] as Ticket
-    },
-
-    async updateTicket(id: string, updates: Partial<Ticket>) {
-        const supabase = createBrowserClient()
-        const { data, error } = await supabase
-            .from('tickets')
-            .update(updates)
-            .eq('id', id)
-            .select()
-
-        if (error) {
-            throw error
-        }
-
-        return data[0] as Ticket
-    },
-
-    async addMessage(message: Partial<TicketMessage>) {
-        const supabase = createBrowserClient()
-
-        // Generate a unique ID for the message
-        const { data: maxId } = await supabase
-            .from('ticket_messages')
-            .select('id')
-            .order('created_at', { ascending: false })
-            .limit(1)
-
-        // Extract the numeric part and increment
-        const lastNum = maxId?.[0]?.id ? parseInt(maxId[0].id.split('_')[1]) : 0
-        const newNum = (lastNum + 1).toString().padStart(3, '0')
-        const newId = `tm_${newNum}`
-
-        const { data, error } = await supabase
-            .from('ticket_messages')
-            .insert([{ ...message, id: newId }])
             .select(`
                 *,
-                sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
+                customer:users!tickets_customer_id_fkey(id, name, email, avatarUrl:avatar_url),
+                team:teams!tickets_team_id_fkey(id, name),
+                assignedAgent:agents!tickets_assigned_agent_id_fkey(
+                    id,
+                    user:users!agents_user_id_fkey(
+                        name,
+                        email,
+                        avatarUrl:avatar_url
+                    )
+                ),
+                messages:ticket_messages(
+                    *,
+                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatarUrl:avatar_url)
+                )
             `)
+            .order('created_at', { ascending: false })
 
         if (error) {
             throw error
         }
 
-        return data[0] as TicketMessage
+        return tickets
     },
 
     subscribeToTickets(callback: (ticket: Ticket) => void) {
-        const supabase = createBrowserClient()
-
         return supabase
             .channel('tickets')
-            .on<{ id: string }>(
+            .on(
                 'postgres_changes' as any,
                 {
                     event: '*',
@@ -190,8 +224,43 @@ export const ticketsService = {
                 },
                 async (payload: { new: { id: string } }) => {
                     // Fetch the complete ticket data when there's a change
-                    const ticket = await this.getTicketById(payload.new.id)
+                    const ticket = await this.getTicket(payload.new.id)
                     callback(ticket)
+                }
+            )
+            .subscribe()
+    },
+
+    subscribeToMessages(ticketId: string, callback: (message: TicketMessage) => void) {
+        return supabase
+            .channel(`messages:${ticketId}`)
+            .on(
+                'postgres_changes' as any,
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'ticket_messages',
+                    filter: `ticket_id=eq.${ticketId}`
+                },
+                async (payload: { new: { id: string, ticket_id: string } }) => {
+                    // Fetch the complete message data when there's a change
+                    const { data: message, error } = await supabase
+                        .from('ticket_messages')
+                        .select(`
+                            *,
+                            sender:users!ticket_messages_sender_id_fkey(
+                                id, 
+                                name, 
+                                email, 
+                                avatarUrl:avatar_url
+                            )
+                        `)
+                        .eq('id', payload.new.id)
+                        .single()
+
+                    if (!error && message) {
+                        callback(message)
+                    }
                 }
             )
             .subscribe()

@@ -5,9 +5,12 @@
         "build": "turbo build",
         "dev": "turbo dev",
         "lint": "turbo lint",
-        "test": "turbo test",
-        "clean": "turbo clean && rm -rf node_modules",
+        "clean": "turbo clean",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "test": "turbo test",
+        "test:ci": "turbo test:ci",
+        "test:e2e": "turbo test:e2e",
+        "test:e2e:headless": "turbo test:e2e:headless",
         "postinstall": "npm run build"
     },
     "workspaces": [

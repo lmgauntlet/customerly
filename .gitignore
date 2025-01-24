@@ -73,4 +73,4 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 docs/**
-design-mocks/**
+/design-mocks

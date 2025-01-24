@@ -14,7 +14,7 @@ export default async function Page() {
 }
 ```
 
-Use the phaseX.md documents for guidance:
+Use the phase[X].md documents for guidance:
 	•	Complete phases sequentially (Phase 1 → Phase 5), though overlapping tasks is permissible if it streamlines development.
 	•	Each file (e.g., phase-1.md, phase-2.md) outlines a feature set. When you finish a phase, confirm that all tasks are completed and tested before advancing to the next.
 

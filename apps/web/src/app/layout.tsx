@@ -15,8 +15,11 @@ export const metadata = {
   title: 'Customerly',
   description: 'Modern customer support platform for growing teams',
   icons: {
-    icon: '/favicon.svg',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/favicon.svg', type: 'image/svg+xml' }
+    ],
+    apple: { url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' },
   },
 }
 

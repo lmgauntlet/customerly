@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { supabase } from '@/lib/supabase'
 import { createUserRecord } from './actions'
 
 export default function LoginPage() {
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClientComponentClient()
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
@@ -34,11 +33,9 @@ export default function LoginPage() {
         throw error
       }
 
-      router.refresh()
       router.push('/tickets')
     } catch (error: any) {
       setError(error.message)
-    } finally {
       setLoading(false)
     }
   }
@@ -53,26 +50,21 @@ export default function LoginPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-        },
+          data: {
+            email,
+          }
+        }
       })
 
-      if (error) throw error
-
-      // Create user record in our database
-      if (authUser) {
-        try {
-          const result = await createUserRecord(authUser.id, authUser.email!)
-          if (!result?.success) {
-            throw new Error(result?.error || 'Failed to create user record')
-          }
-        } catch (error: any) {
-          console.error('Error creating user record:', error)
-          throw new Error('Failed to create user record')
-        }
+      if (error) {
+        console.error('Error during sign-up:', error)
+        throw error
       }
 
-      setError('Check your email for the confirmation link.')
+      if (authUser) {
+        await createUserRecord(authUser.id, email)
+        setError('Check your email for the confirmation link')
+      }
     } catch (error: any) {
       setError(error.message)
     } finally {

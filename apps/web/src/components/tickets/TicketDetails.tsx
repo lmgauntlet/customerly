@@ -8,6 +8,7 @@ import { PriorityBadge } from '@/components/tickets/PriorityBadge'
 import { Avatar } from '@/components/ui/avatar'
 import { type Ticket, ticketsService } from '@/services/tickets'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 
 interface Props {
     ticket?: Ticket
@@ -16,6 +17,8 @@ interface Props {
 export function TicketDetails({ ticket }: Props) {
     const [replyContent, setReplyContent] = useState('')
     const [sending, setSending] = useState(false)
+    const [isInternalNote, setIsInternalNote] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     if (!ticket) {
         return (
@@ -30,15 +33,26 @@ export function TicketDetails({ ticket }: Props) {
 
         try {
             setSending(true)
+            setError(null)
+
+            const { data: { user }, error } = await supabase.auth.getUser()
+            if (error) throw error
+            if (!user) {
+                throw new Error('You must be logged in to send messages')
+            }
+
             await ticketsService.addMessage({
                 ticket_id: ticket.id,
                 content: replyContent,
-                is_internal: false,
+                is_internal: isInternalNote,
+                sender_id: user.id,
                 attachments: []
             })
             setReplyContent('')
+            setIsInternalNote(false)
         } catch (error) {
             console.error('Failed to send reply:', error)
+            setError('Failed to send message. Please try again.')
         } finally {
             setSending(false)
         }
@@ -136,20 +150,63 @@ export function TicketDetails({ ticket }: Props) {
 
                 {/* Reply Box */}
                 <div className="p-4 border-t border-border">
-                    <Textarea
-                        placeholder="Type your reply..."
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        className="mb-4"
-                        rows={4}
-                    />
-                    <div className="flex justify-end gap-2">
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3 mb-4">
                         <Button
-                            onClick={handleSendReply}
-                            disabled={!replyContent.trim() || sending}
+                            variant={isInternalNote ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setIsInternalNote(false)}
+                            className="relative"
                         >
-                            {sending ? 'Sending...' : 'Send Reply'}
+                            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            Reply
                         </Button>
+                        <Button
+                            variant={isInternalNote ? "outline" : "default"}
+                            size="sm"
+                            onClick={() => setIsInternalNote(true)}
+                            className="relative"
+                        >
+                            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeWidth={2} d="M8 7.5v9M12 7.5v9M16 7.5v9M3 10.5h18M3 14.5h18"/>
+                            </svg>
+                            Internal Note
+                        </Button>
+                    </div>
+                    <div className={cn(
+                        "rounded-lg border transition-colors duration-200",
+                        isInternalNote ? "bg-[#FFF9E7] border-[#E6D5A7]" : "bg-white border-input"
+                    )}>
+                        <Textarea
+                            placeholder={isInternalNote ? "Add an internal note..." : "Type your reply..."}
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            className={cn(
+                                "border-0 focus-visible:ring-0 resize-none",
+                                isInternalNote ? "bg-[#FFF9E7] placeholder:text-[#8B5D23]" : ""
+                            )}
+                            rows={4}
+                        />
+                        <div className="flex items-center justify-between p-2 border-t">
+                            <div className="flex items-center gap-2">
+                                {/* Add attachment button here in the future */}
+                            </div>
+                            <Button
+                                onClick={handleSendReply}
+                                disabled={!replyContent.trim() || sending}
+                                className={cn(
+                                    isInternalNote ? "bg-[#8B5D23] hover:bg-[#704B1C] text-white" : ""
+                                )}
+                            >
+                                {sending ? 'Sending...' : isInternalNote ? 'Add Note' : 'Send Reply'}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

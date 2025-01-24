@@ -148,9 +148,22 @@ export const ticketsService = {
 
     async addMessage(message: Partial<TicketMessage>) {
         const supabase = createBrowserClient()
+
+        // Generate a unique ID for the message
+        const { data: maxId } = await supabase
+            .from('ticket_messages')
+            .select('id')
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+        // Extract the numeric part and increment
+        const lastNum = maxId?.[0]?.id ? parseInt(maxId[0].id.split('_')[1]) : 0
+        const newNum = (lastNum + 1).toString().padStart(3, '0')
+        const newId = `tm_${newNum}`
+
         const { data, error } = await supabase
             .from('ticket_messages')
-            .insert([message])
+            .insert([{ ...message, id: newId }])
             .select(`
                 *,
                 sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)

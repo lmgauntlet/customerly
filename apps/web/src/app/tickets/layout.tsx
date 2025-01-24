@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { Avatar } from '@/components/ui/avatar'
+import { supabase } from '@/lib/supabase'
+import { getCurrentDbUser, type DbUser } from '@/lib/auth'
 
 interface NavItem {
     label: string
@@ -67,13 +69,46 @@ export default function TicketsLayout({
 }: {
     children: React.ReactNode
 }) {
-    const [selectedView, setSelectedView] = useState('unresolved')
+    const [selectedView, setSelectedView] = useState('All')
+    const [currentUser, setCurrentUser] = useState<DbUser | null>(null)
     const router = useRouter()
-    const supabase = createClientComponentClient()
+
+    useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const user = await getCurrentDbUser()
+                setCurrentUser(user)
+            } catch (error) {
+                console.error('Failed to load user:', error)
+                router.push('/login')
+            }
+        }
+        loadUser()
+
+        // Subscribe to auth state changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT') {
+                router.push('/login')
+            } else if (event === 'SIGNED_IN' && session) {
+                try {
+                    const user = await getCurrentDbUser()
+                    setCurrentUser(user)
+                } catch (error) {
+                    console.error('Failed to load user:', error)
+                    router.push('/login')
+                }
+            }
+        })
+
+        return () => {
+            subscription.unsubscribe()
+        }
+    }, [router])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
-        router.refresh()
         router.push('/')
     }
 
@@ -116,9 +151,13 @@ export default function TicketsLayout({
                 {/* User Profile Section */}
                 <div className="border-t border-border p-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10" />
+                        <Avatar
+                            name={currentUser?.name ?? currentUser?.email ?? ''}
+                            email={currentUser?.email ?? ''}
+                            avatarUrl={currentUser?.avatarUrl ?? undefined}
+                        />
                         <div className="flex-1">
-                            <p className="text-sm font-medium">Agent Name</p>
+                            <p className="text-sm font-medium">{currentUser?.name ?? currentUser?.email}</p>
                             <p className="text-xs text-muted-foreground">Online</p>
                         </div>
                     </div>

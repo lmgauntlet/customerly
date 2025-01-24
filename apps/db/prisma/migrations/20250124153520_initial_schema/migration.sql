@@ -33,6 +33,7 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
+    "avatar_url" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'customer',
     "preferences" JSONB NOT NULL DEFAULT '{}',
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,

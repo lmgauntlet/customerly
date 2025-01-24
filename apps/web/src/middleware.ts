@@ -1,10 +1,9 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createMiddlewareClient } from '@/utils/supabase'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  const { supabase, response } = createMiddlewareClient(req)
 
   const {
     data: { session },
@@ -17,7 +16,7 @@ export async function middleware(req: NextRequest) {
       // If user is signed in, redirect to tickets
       return NextResponse.redirect(new URL('/tickets', req.url))
     }
-    return res
+    return response
   }
 
   // Home page is public
@@ -27,7 +26,12 @@ export async function middleware(req: NextRequest) {
       // If user is signed in, redirect to tickets
       return NextResponse.redirect(new URL('/tickets', req.url))
     }
-    return res
+    return response
+  }
+
+  // API routes are public
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return response
   }
 
   // If no session and not a public page, redirect to login
@@ -35,7 +39,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  return res
+  return response
 }
 
 export const config = {

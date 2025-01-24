@@ -8,20 +8,34 @@ export async function createUserRecord(authUserId: string, email: string) {
     const supabase = createServerClient(cookieStore)
 
     // Check if user exists in our database by email
-    const { data: existingUser, error } = await supabase
+    const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select()
         .eq('email', email)
         .single()
 
-    if (error) {
-        console.error('Error fetching user:', error)
-        return { success: false, error: error.message }
-    }
-
     if (existingUser) {
         return { success: true, user: existingUser }
     }
 
-    return { success: false, error: 'User not found' }
-} 
+    // If user doesn't exist, create a new one
+    const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert([
+            {
+                id: authUserId,
+                email,
+                role: 'customer',
+                preferences: {},
+            }
+        ])
+        .select()
+        .single()
+
+    if (createError) {
+        console.error('Error creating user:', createError)
+        return { success: false, error: createError.message }
+    }
+
+    return { success: true, user: newUser }
+}

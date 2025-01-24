@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { Avatar } from '@/components/ui/avatar'
+import { supabase } from '@/lib/supabase'
+import { getCurrentUser, type User } from '@/lib/auth'
 
 interface NavItem {
     label: string
@@ -67,20 +69,53 @@ export default function TicketsLayout({
 }: {
     children: React.ReactNode
 }) {
-    const [selectedView, setSelectedView] = useState('unresolved')
+    const [selectedView, setSelectedView] = useState('All')
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
     const router = useRouter()
-    const supabase = createClientComponentClient()
+
+    useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const user = await getCurrentUser()
+                setCurrentUser(user)
+            } catch (error) {
+                console.error('Failed to load user:', error)
+                router.push('/login')
+            }
+        }
+        loadUser()
+
+        // Subscribe to auth state changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT') {
+                router.push('/login')
+            } else if (event === 'SIGNED_IN' && session) {
+                try {
+                    const user = await getCurrentUser()
+                    setCurrentUser(user)
+                } catch (error) {
+                    console.error('Failed to load user:', error)
+                    router.push('/login')
+                }
+            }
+        })
+
+        return () => {
+            subscription.unsubscribe()
+        }
+    }, [router])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
-        router.refresh()
         router.push('/')
     }
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="fixed inset-0 flex bg-background">
             {/* Main Left Panel - Primary Navigation */}
-            <div className="w-64 flex flex-col border-r border-border bg-card">
+            <div className="w-[240px] flex flex-col border-r border-border bg-card">
                 <div className="flex h-16 items-center justify-between border-b border-border px-4">
                     <Link href="/" className="text-xl font-bold text-primary">
                         Customerly
@@ -95,7 +130,7 @@ export default function TicketsLayout({
                 </div>
 
                 {/* Main Navigation Items */}
-                <nav className="flex-1 space-y-1 p-4">
+                <nav className="space-y-1 p-4">
                     {mainNavItems.map((item) => (
                         <Link
                             key={item.href}
@@ -116,9 +151,13 @@ export default function TicketsLayout({
                 {/* User Profile Section */}
                 <div className="border-t border-border p-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10" />
+                        <Avatar
+                            name={currentUser?.name ?? currentUser?.email ?? ''}
+                            email={currentUser?.email ?? ''}
+                            avatarUrl={currentUser?.avatarUrl ?? undefined}
+                        />
                         <div className="flex-1">
-                            <p className="text-sm font-medium">Agent Name</p>
+                            <p className="text-sm font-medium">{currentUser?.name ?? currentUser?.email}</p>
                             <p className="text-xs text-muted-foreground">Online</p>
                         </div>
                     </div>
@@ -126,11 +165,11 @@ export default function TicketsLayout({
             </div>
 
             {/* Secondary Left Panel - Ticket Views */}
-            <div className="w-64 flex flex-col border-r border-border bg-card/50">
+            <div className="w-[240px] flex flex-col border-r border-border bg-card/50">
                 <div className="flex h-16 items-center px-6 border-b border-border">
                     <h2 className="text-lg font-semibold">Views</h2>
                 </div>
-                <nav className="flex-1 p-4">
+                <nav className="p-4">
                     <div className="space-y-1">
                         {ticketViews.map((view) => (
                             <button
@@ -158,27 +197,10 @@ export default function TicketsLayout({
                 </nav>
             </div>
 
-            {/* Main Content - Ticket List */}
-            <div className="flex flex-1 flex-col border-r border-border">
-                <div className="flex h-16 items-center justify-between border-b border-border px-6">
-                    <h1 className="text-lg font-semibold">Inbox</h1>
-                </div>
-                <div className="flex-1 overflow-auto p-6">
-                    {children}
-                </div>
-            </div>
-
-            {/* Right Panel - Ticket Details */}
-            <div className="w-96 bg-card">
-                <div className="flex h-16 items-center border-b border-border px-6">
-                    <h2 className="text-lg font-semibold">Ticket Details</h2>
-                </div>
-                <div className="p-6">
-                    <div className="text-sm text-muted-foreground">
-                        Select a ticket to view details
-                    </div>
-                </div>
+            {/* Main Content Area */}
+            <div className="flex-1">
+                {children}
             </div>
         </div>
     )
-} 
+}

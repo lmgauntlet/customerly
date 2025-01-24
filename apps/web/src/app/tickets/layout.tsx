@@ -55,22 +55,11 @@ const mainNavItems: NavItem[] = [
 ]
 
 const ticketViews = [
-    { label: 'Your unresolved tickets', count: 1 },
-    { label: 'Unassigned tickets', count: 0 },
-    { label: 'All unresolved tickets', count: 1 },
-    { label: 'Recently updated tickets', count: 1 },
-    { label: 'Pending tickets', count: 0 },
-    { label: 'Recently solved tickets', count: 0 },
-    { label: 'Suspended tickets', count: 0 },
-    { label: 'Deleted tickets', count: 0 }
-]
-
-const channelStatus = [
-    { label: 'Email', status: 'online' },
-    { label: 'Chat', status: 'online' },
-    { label: 'Twitter', status: 'online' },
-    { label: 'Facebook', status: 'online' },
-    { label: 'Whatsapp', status: 'online' }
+    { label: 'All Tickets', count: 24 },
+    { label: 'Assigned to me', count: 12 },
+    { label: 'Unassigned', count: 8 },
+    { label: 'Due today', count: 3 },
+    { label: 'High priority', count: 5 }
 ]
 
 export default function TicketsLayout({
@@ -124,17 +113,13 @@ export default function TicketsLayout({
                     ))}
                 </nav>
 
-                {/* Channel Status */}
-                <div className="border-t border-border">
-                    <div className="p-4">
-                        <h2 className="text-sm font-semibold text-muted-foreground mb-2">CHANNEL STATUS</h2>
-                        <div className="space-y-1">
-                            {channelStatus.map((channel) => (
-                                <div key={channel.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                    <span>{channel.label}</span>
-                                </div>
-                            ))}
+                {/* User Profile Section */}
+                <div className="border-t border-border p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium">Agent Name</p>
+                            <p className="text-xs text-muted-foreground">Online</p>
                         </div>
                     </div>
                 </div>
@@ -173,15 +158,24 @@ export default function TicketsLayout({
                 </nav>
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex">
-                {/* Ticket List */}
-                <div className="flex-1 flex flex-col border-r border-border">
-                    <div className="flex h-16 items-center justify-between border-b border-border px-6">
-                        <h1 className="text-lg font-semibold">Your unresolved tickets</h1>
-                    </div>
-                    <div className="flex-1 overflow-auto p-6">
-                        {children}
+            {/* Main Content - Ticket List */}
+            <div className="flex flex-1 flex-col border-r border-border">
+                <div className="flex h-16 items-center justify-between border-b border-border px-6">
+                    <h1 className="text-lg font-semibold">Inbox</h1>
+                </div>
+                <div className="flex-1 overflow-auto p-6">
+                    {children}
+                </div>
+            </div>
+
+            {/* Right Panel - Ticket Details */}
+            <div className="w-96 bg-card">
+                <div className="flex h-16 items-center border-b border-border px-6">
+                    <h2 className="text-lg font-semibold">Ticket Details</h2>
+                </div>
+                <div className="p-6">
+                    <div className="text-sm text-muted-foreground">
+                        Select a ticket to view details
                     </div>
                 </div>
             </div>

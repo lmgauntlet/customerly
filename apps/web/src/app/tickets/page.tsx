@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { PriorityBadge } from '@/components/tickets/PriorityBadge'
-import { Textarea } from '@/components/ui/textarea'
+import { useRouter } from 'next/navigation'
 
 interface Ticket {
     id: string
@@ -15,27 +15,15 @@ interface Ticket {
     requester: {
         name: string
         email: string
-        company?: string
     }
     created_at: string
     source: 'email' | 'web' | 'chat' | 'api' | 'phone'
     lastMessage?: string
-    messages?: {
-        id: string
-        content: string
-        sender: {
-            name: string
-            email: string
-            type: 'customer' | 'agent'
-        }
-        created_at: string
-    }[]
 }
 
 export default function TicketsPage() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
-    const [replyText, setReplyText] = useState('')
+    const router = useRouter()
 
     // Mock data - replace with actual data fetching
     const tickets: Ticket[] = [
@@ -46,34 +34,11 @@ export default function TicketsPage() {
             priority: 'urgent',
             requester: {
                 name: 'John Smith',
-                email: 'john@acmecorp.com',
-                company: 'AcmeCorp'
+                email: 'john@acmecorp.com'
             },
             created_at: '2024-01-15T14:30:00Z',
             source: 'email',
-            lastMessage: 'The pods are not scheduling correctly in the production environment...',
-            messages: [
-                {
-                    id: '1',
-                    content: 'We\'re experiencing issues with pod scheduling in the production cluster. Several pods are stuck in pending state and not being scheduled properly.',
-                    sender: {
-                        name: 'John Smith',
-                        email: 'john@acmecorp.com',
-                        type: 'customer'
-                    },
-                    created_at: '2024-01-15T14:30:00Z'
-                },
-                {
-                    id: '2',
-                    content: 'I understand you\'re having issues with pod scheduling. Could you please share the output of `kubectl get pods` and `kubectl describe pod <pod-name>` for one of the affected pods?',
-                    sender: {
-                        name: 'Alex Support',
-                        email: 'alex@customerly.com',
-                        type: 'agent'
-                    },
-                    created_at: '2024-01-15T14:35:00Z'
-                }
-            ]
+            lastMessage: 'The pods are not scheduling correctly in the production environment...'
         },
         {
             id: '2',
@@ -82,20 +47,13 @@ export default function TicketsPage() {
             priority: 'high',
             requester: {
                 name: 'Sarah Connor',
-                email: 'sarah@skynet.com',
-                company: 'Skynet'
+                email: 'sarah@skynet.com'
             },
             created_at: '2024-01-15T12:15:00Z',
             source: 'web',
             lastMessage: 'We need to review the network policies as they are not being applied...'
         }
     ]
-
-    const handleReply = () => {
-        // Handle reply submission
-        console.log('Submitting reply:', replyText)
-        setReplyText('')
-    }
 
     return (
         <div className="space-y-4">
@@ -131,8 +89,8 @@ export default function TicketsPage() {
                 {tickets.map((ticket) => (
                     <button
                         key={ticket.id}
-                        onClick={() => setSelectedTicket(ticket)}
-                        className={`w-full flex items-start p-4 text-left hover:bg-accent/50 ${selectedTicket?.id === ticket.id ? 'bg-accent' : ''}`}
+                        onClick={() => router.push(`/tickets/${ticket.id}`)}
+                        className="w-full flex items-start p-4 hover:bg-accent/50 text-left"
                     >
                         {/* Source Icon */}
                         <div className="mr-4 mt-1">

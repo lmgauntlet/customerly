@@ -55,11 +55,22 @@ const mainNavItems: NavItem[] = [
 ]
 
 const ticketViews = [
-    { label: 'All Tickets', count: 24 },
-    { label: 'Assigned to me', count: 12 },
-    { label: 'Unassigned', count: 8 },
-    { label: 'Due today', count: 3 },
-    { label: 'High priority', count: 5 }
+    { label: 'Your unresolved tickets', count: 1 },
+    { label: 'Unassigned tickets', count: 0 },
+    { label: 'All unresolved tickets', count: 1 },
+    { label: 'Recently updated tickets', count: 1 },
+    { label: 'Pending tickets', count: 0 },
+    { label: 'Recently solved tickets', count: 0 },
+    { label: 'Suspended tickets', count: 0 },
+    { label: 'Deleted tickets', count: 0 }
+]
+
+const channelStatus = [
+    { label: 'Email', status: 'online' },
+    { label: 'Chat', status: 'online' },
+    { label: 'Twitter', status: 'online' },
+    { label: 'Facebook', status: 'online' },
+    { label: 'Whatsapp', status: 'online' }
 ]
 
 export default function TicketsLayout({
@@ -113,60 +124,64 @@ export default function TicketsLayout({
                     ))}
                 </nav>
 
-                {/* User Profile Section */}
-                <div className="border-t border-border p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10" />
-                        <div className="flex-1">
-                            <p className="text-sm font-medium">Agent Name</p>
-                            <p className="text-xs text-muted-foreground">Online</p>
+                {/* Channel Status */}
+                <div className="border-t border-border">
+                    <div className="p-4">
+                        <h2 className="text-sm font-semibold text-muted-foreground mb-2">CHANNEL STATUS</h2>
+                        <div className="space-y-1">
+                            {channelStatus.map((channel) => (
+                                <div key={channel.label} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                                    <span>{channel.label}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Secondary Navigation and Ticket List */}
-            <div className="flex flex-1 flex-col border-r border-border">
-                {/* Secondary Navigation - Ticket Views */}
-                <div className="border-b border-border bg-card">
-                    <div className="flex h-16 items-center justify-between px-6">
-                        <h1 className="text-lg font-semibold">Inbox</h1>
-                    </div>
-                    <div className="flex gap-1 p-2">
+            {/* Secondary Left Panel - Ticket Views */}
+            <div className="w-64 flex flex-col border-r border-border bg-card/50">
+                <div className="flex h-16 items-center px-6 border-b border-border">
+                    <h2 className="text-lg font-semibold">Views</h2>
+                </div>
+                <nav className="flex-1 p-4">
+                    <div className="space-y-1">
                         {ticketViews.map((view) => (
                             <button
                                 key={view.label}
                                 onClick={() => setSelectedView(view.label)}
                                 className={cn(
-                                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium",
+                                    "flex w-full items-center justify-between rounded-lg px-4 py-2 text-sm font-medium",
                                     selectedView === view.label
                                         ? "bg-primary/10 text-primary"
                                         : "text-muted-foreground hover:bg-accent"
                                 )}
                             >
-                                {view.label}
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                                <span>{view.label}</span>
+                                <span className={cn(
+                                    "rounded-full px-2 py-0.5 text-xs",
+                                    selectedView === view.label
+                                        ? "bg-primary/20"
+                                        : "bg-muted"
+                                )}>
                                     {view.count}
                                 </span>
                             </button>
                         ))}
                     </div>
-                </div>
-
-                {/* Ticket List */}
-                <div className="flex-1 overflow-auto p-6">
-                    {children}
-                </div>
+                </nav>
             </div>
 
-            {/* Right Panel - Ticket Details */}
-            <div className="w-96 bg-card">
-                <div className="flex h-16 items-center border-b border-border px-6">
-                    <h2 className="text-lg font-semibold">Ticket Details</h2>
-                </div>
-                <div className="p-6">
-                    <div className="text-sm text-muted-foreground">
-                        Select a ticket to view details
+            {/* Main Content Area */}
+            <div className="flex-1 flex">
+                {/* Ticket List */}
+                <div className="flex-1 flex flex-col border-r border-border">
+                    <div className="flex h-16 items-center justify-between border-b border-border px-6">
+                        <h1 className="text-lg font-semibold">Your unresolved tickets</h1>
+                    </div>
+                    <div className="flex-1 overflow-auto p-6">
+                        {children}
                     </div>
                 </div>
             </div>

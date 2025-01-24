@@ -72,5 +72,4 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
-docs/**
-/design-mocks
+drafts/

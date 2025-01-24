@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { PriorityBadge } from '@/components/tickets/PriorityBadge'
+import { useRouter } from 'next/navigation'
 
 interface Ticket {
     id: string
@@ -17,10 +18,12 @@ interface Ticket {
     }
     created_at: string
     source: 'email' | 'web' | 'chat' | 'api' | 'phone'
+    lastMessage?: string
 }
 
 export default function TicketsPage() {
     const [searchQuery, setSearchQuery] = useState('')
+    const router = useRouter()
 
     // Mock data - replace with actual data fetching
     const tickets: Ticket[] = [
@@ -34,7 +37,8 @@ export default function TicketsPage() {
                 email: 'john@acmecorp.com'
             },
             created_at: '2024-01-15T14:30:00Z',
-            source: 'email'
+            source: 'email',
+            lastMessage: 'The pods are not scheduling correctly in the production environment...'
         },
         {
             id: '2',
@@ -46,7 +50,8 @@ export default function TicketsPage() {
                 email: 'sarah@skynet.com'
             },
             created_at: '2024-01-15T12:15:00Z',
-            source: 'web'
+            source: 'web',
+            lastMessage: 'We need to review the network policies as they are not being applied...'
         }
     ]
 
@@ -80,14 +85,15 @@ export default function TicketsPage() {
             </div>
 
             {/* Tickets List */}
-            <div className="rounded-lg border border-border">
+            <div className="rounded-lg border border-border divide-y divide-border">
                 {tickets.map((ticket) => (
-                    <div
+                    <button
                         key={ticket.id}
-                        className="flex items-center border-b border-border p-4 last:border-0 hover:bg-accent/50"
+                        onClick={() => router.push(`/tickets/${ticket.id}`)}
+                        className="w-full flex items-start p-4 hover:bg-accent/50 text-left"
                     >
                         {/* Source Icon */}
-                        <div className="mr-4">
+                        <div className="mr-4 mt-1">
                             {ticket.source === 'email' ? (
                                 <svg
                                     className="h-5 w-5 text-muted-foreground"
@@ -120,21 +126,26 @@ export default function TicketsPage() {
                         </div>
 
                         {/* Ticket Info */}
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-medium">{ticket.title}</h3>
-                                <div className="flex items-center space-x-2">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-medium truncate">{ticket.title}</h3>
+                                <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                                     <StatusBadge status={ticket.status} />
                                     <PriorityBadge priority={ticket.priority} />
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                                 <span>{ticket.requester.name}</span>
                                 <span>•</span>
                                 <span>{new Date(ticket.created_at).toLocaleString()}</span>
                             </div>
+                            {ticket.lastMessage && (
+                                <p className="text-sm text-muted-foreground truncate">
+                                    {ticket.lastMessage}
+                                </p>
+                            )}
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
         </div>

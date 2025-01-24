@@ -14,13 +14,6 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: 'Customerly',
   description: 'Modern customer support platform for growing teams',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '32x32' },
-      { url: '/favicon.svg', type: 'image/svg+xml' }
-    ],
-    apple: { url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' },
-  },
 }
 
 export default function RootLayout({
@@ -35,6 +28,11 @@ export default function RootLayout({
       style={{ colorScheme: 'light' }}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className="bg-background text-foreground">
         <NextTopLoader showSpinner={false} height={2} color="#2acf80" />
         <ThemeProvider

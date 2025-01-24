@@ -157,26 +157,22 @@ export const ticketsService = {
 
     subscribeToTickets(callback: (ticket: Ticket) => void) {
         const supabase = createBrowserClient()
-        
-        const subscription = supabase
+
+        return supabase
             .channel('tickets')
-            .on(
-                'postgres_changes',
+            .on<{ id: string }>(
+                'postgres_changes' as any,
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'tickets'
+                    table: 'tickets',
                 },
-                async (payload) => {
+                async (payload: { new: { id: string } }) => {
                     // Fetch the complete ticket data when there's a change
                     const ticket = await this.getTicketById(payload.new.id)
                     callback(ticket)
                 }
             )
             .subscribe()
-
-        return () => {
-            subscription.unsubscribe()
-        }
     }
 }

@@ -3,6 +3,7 @@
         "id": "user-admin-liwei",
         "email": "liweimao+admin@gmail.com",
         "name": "Liwei Admin",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=liwei-admin",
         "role": "admin",
         "preferences": {
             "notifications": {
@@ -16,6 +17,7 @@
         "id": "user-customer-liwei",
         "email": "liweimao+customer@gmail.com",
         "name": "Liwei Customer",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=liwei-customer",
         "role": "customer",
         "preferences": {
             "notifications": {
@@ -27,6 +29,7 @@
         "id": "user-agent-alex",
         "email": "alex.tech@cloudstack.com",
         "name": "Alex Chen",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=alex-chen",
         "role": "agent",
         "preferences": {
             "notifications": {
@@ -39,6 +42,7 @@
         "id": "user-agent-maria",
         "email": "maria.tech@cloudstack.com",
         "name": "Maria Rodriguez",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria-rodriguez",
         "role": "agent",
         "preferences": {
             "notifications": {
@@ -51,6 +55,7 @@
         "id": "user-agent-nina",
         "email": "nina.billing@cloudstack.com",
         "name": "Nina Patel",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=nina-patel",
         "role": "agent",
         "preferences": {
             "notifications": {
@@ -63,6 +68,7 @@
         "id": "user-customer-john",
         "email": "john@scaleup.io",
         "name": "John Mitchell",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=john-mitchell",
         "role": "customer",
         "preferences": {
             "notifications": {
@@ -74,6 +80,7 @@
         "id": "user-customer-carlos",
         "email": "carlos@megacorp.com",
         "name": "Carlos Santos",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=carlos-santos",
         "role": "customer",
         "preferences": {
             "notifications": {

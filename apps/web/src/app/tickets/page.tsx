@@ -19,7 +19,7 @@ export default function TicketsPage() {
         loadTickets()
 
         // Subscribe to ticket updates
-        const unsubscribe = ticketsService.subscribeToTickets((updatedTicket) => {
+        const channel = ticketsService.subscribeToTickets((updatedTicket) => {
             setTickets(currentTickets => {
                 const index = currentTickets.findIndex(t => t.id === updatedTicket.id)
                 if (index === -1) {
@@ -37,7 +37,7 @@ export default function TicketsPage() {
         })
 
         return () => {
-            unsubscribe()
+            channel.unsubscribe()
         }
     }, [selectedTicket?.id])
 
@@ -140,7 +140,7 @@ export default function TicketsPage() {
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
                                                     strokeWidth={2}
-                                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
                                                 />
                                             </svg>
                                         )}
@@ -159,7 +159,7 @@ export default function TicketsPage() {
                                             <PriorityBadge priority={ticket.priority} />
                                             {ticket.assignedAgent && (
                                                 <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                                                    {ticket.assignedAgent.name}
+                                                    {ticket.assignedAgent.user.name}
                                                 </span>
                                             )}
                                         </div>

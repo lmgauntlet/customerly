@@ -26,6 +26,20 @@
         }
     },
     {
+        "id": "user-admin-lmgauntlet",
+        "email": "lmgauntlet@gmail.com",
+        "name": "LM Gauntlet",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=lmgauntlet",
+        "role": "admin",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true,
+                "push": true
+            }
+        }
+    },
+    {
         "id": "user-agent-alex",
         "email": "alex.tech@cloudstack.com",
         "name": "Alex Chen",

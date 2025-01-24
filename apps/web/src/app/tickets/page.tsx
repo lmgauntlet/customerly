@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { PriorityBadge } from '@/components/tickets/PriorityBadge'
+import { ChannelIcon } from '@/components/tickets/ChannelIcon'
+import { Avatar } from '@/components/ui/avatar'
 import { TicketDetails } from '@/components/tickets/TicketDetails'
 import { type Ticket, ticketsService } from '@/services/tickets'
 
@@ -113,37 +116,9 @@ export default function TicketsPage() {
                                     onClick={() => setSelectedTicket(ticket)}
                                     className={`w-full flex items-start p-4 hover:bg-accent/50 text-left ${selectedTicket?.id === ticket.id ? 'bg-accent' : ''}`}
                                 >
-                                    {/* Source Icon */}
+                                    {/* Channel Icon */}
                                     <div className="mr-4 mt-1">
-                                        {ticket.source === 'email' ? (
-                                            <svg
-                                                className="h-5 w-5 text-muted-foreground"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                                />
-                                            </svg>
-                                        ) : (
-                                            <svg
-                                                className="h-5 w-5 text-muted-foreground"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                                                />
-                                            </svg>
-                                        )}
+                                        <ChannelIcon channel={ticket.metadata?.channel as string || 'web'} />
                                     </div>
 
                                     {/* Ticket Info */}
@@ -158,9 +133,15 @@ export default function TicketsPage() {
                                             <StatusBadge status={ticket.status} />
                                             <PriorityBadge priority={ticket.priority} />
                                             {ticket.assignedAgent && (
-                                                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                                                <div className="flex items-center gap-1.5 text-xs bg-muted px-2 py-0.5 rounded-full">
+                                                    <Avatar
+                                                        name={ticket.assignedAgent.user.name}
+                                                        email={ticket.assignedAgent.user.email}
+                                                        avatarUrl={ticket.assignedAgent.user.avatar_url}
+                                                        size="sm"
+                                                    />
                                                     {ticket.assignedAgent.user.name}
-                                                </span>
+                                                </div>
                                             )}
                                         </div>
                                         <p className="text-sm text-muted-foreground truncate">

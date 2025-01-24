@@ -26,6 +26,7 @@ export interface Ticket {
     user: {
       name: string
       email: string
+      avatar_url?: string
     }
   }
 
@@ -33,6 +34,7 @@ export interface Ticket {
   customer?: {
     email: string
     name?: string
+    avatar_url?: string
   }
   team?: {
     name: string
@@ -41,6 +43,7 @@ export interface Ticket {
     user: {
       email: string
       name?: string
+      avatar_url?: string
     }
   }
   messages?: TicketMessage[]

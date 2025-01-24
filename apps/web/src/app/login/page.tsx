@@ -34,19 +34,6 @@ export default function LoginPage() {
         throw error
       }
 
-      // Get or create the database user
-      if (authUser) {
-        try {
-          const result = await createUserRecord(authUser.id, authUser.email!)
-          if (!result?.success) {
-            throw new Error(result?.error || 'Failed to get or create user record')
-          }
-        } catch (error: any) {
-          console.error('Error creating user record:', error)
-          throw new Error('Failed to create user record')
-        }
-      }
-
       router.refresh()
       router.push('/tickets')
     } catch (error: any) {

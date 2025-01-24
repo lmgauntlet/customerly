@@ -21,6 +21,7 @@ export interface Ticket {
         id: string
         name: string
         email: string
+        avatar_url?: string
     }
     team?: {
         id: string
@@ -30,6 +31,8 @@ export interface Ticket {
         id: string
         user: {
             name: string
+            email: string
+            avatar_url?: string
         }
     }
     messages?: TicketMessage[]
@@ -48,6 +51,7 @@ export interface TicketMessage {
         id: string
         name: string
         email: string
+        avatar_url?: string
     }
 }
 
@@ -58,17 +62,19 @@ export const ticketsService = {
             .from('tickets')
             .select(`
                 *,
-                customer:users!tickets_customer_id_fkey(id, name, email),
+                customer:users!tickets_customer_id_fkey(id, name, email, avatar_url),
                 team:teams!tickets_team_id_fkey(id, name),
                 assignedAgent:agents!tickets_assigned_agent_id_fkey(
                     id,
                     user:users!agents_user_id_fkey(
-                        name
+                        name,
+                        email,
+                        avatar_url
                     )
                 ),
                 messages:ticket_messages(
                     *,
-                    sender:users!ticket_messages_sender_id_fkey(id, name, email)
+                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
                 )
             `)
             .order('created_at', { ascending: false })
@@ -86,17 +92,19 @@ export const ticketsService = {
             .from('tickets')
             .select(`
                 *,
-                customer:users!tickets_customer_id_fkey(id, name, email),
+                customer:users!tickets_customer_id_fkey(id, name, email, avatar_url),
                 team:teams!tickets_team_id_fkey(id, name),
                 assignedAgent:agents!tickets_assigned_agent_id_fkey(
                     id,
                     user:users!agents_user_id_fkey(
-                        name
+                        name,
+                        email,
+                        avatar_url
                     )
                 ),
                 messages:ticket_messages(
                     *,
-                    sender:users!ticket_messages_sender_id_fkey(id, name, email)
+                    sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
                 )
             `)
             .eq('id', id)
@@ -145,7 +153,7 @@ export const ticketsService = {
             .insert([message])
             .select(`
                 *,
-                sender:users!ticket_messages_sender_id_fkey(id, name, email)
+                sender:users!ticket_messages_sender_id_fkey(id, name, email, avatar_url)
             `)
 
         if (error) {

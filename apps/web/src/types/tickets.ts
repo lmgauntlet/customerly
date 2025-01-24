@@ -32,9 +32,11 @@ export interface Ticket {
 
   // Relations (optional as they may not be included in every query)
   customer?: {
+    id: string
     email: string
     name?: string
     avatar_url?: string
+    organization?: string
   }
   team?: {
     name: string

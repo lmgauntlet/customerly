@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -15,36 +15,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [session, setSession] = useState<any>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
-
-  useEffect(() => {
-    async function authenticate() {
-      try {
-        const { data: { user: authUser }, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-
-        console.log('Auth user:', authUser)
-        if (error) {
-          console.error('Error during sign-in:', error)
-          throw error
-        }
-
-        if (authUser) {
-          setSession(authUser)
-          router.push('/')
-        }
-      } catch (error) {
-        console.error('Authentication error:', error)
-      }
-    }
-    authenticate()
-  }, [supabase, router, email, password])
-
-  console.log('Rendering with session:', session)
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
@@ -57,7 +29,6 @@ export default function LoginPage() {
         password,
       })
 
-      console.log('Auth user:', authUser)
       if (error) {
         console.error('Error during sign-in:', error)
         throw error
@@ -65,9 +36,14 @@ export default function LoginPage() {
 
       // Get or create the database user
       if (authUser) {
-        const result = await createUserRecord(authUser.id, authUser.email!)
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to get or create user record')
+        try {
+          const result = await createUserRecord(authUser.id, authUser.email!)
+          if (!result?.success) {
+            throw new Error(result?.error || 'Failed to get or create user record')
+          }
+        } catch (error: any) {
+          console.error('Error creating user record:', error)
+          throw new Error('Failed to create user record')
         }
       }
 
@@ -98,13 +74,18 @@ export default function LoginPage() {
 
       // Create user record in our database
       if (authUser) {
-        const result = await createUserRecord(authUser.id, authUser.email!)
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create user record')
+        try {
+          const result = await createUserRecord(authUser.id, authUser.email!)
+          if (!result?.success) {
+            throw new Error(result?.error || 'Failed to create user record')
+          }
+        } catch (error: any) {
+          console.error('Error creating user record:', error)
+          throw new Error('Failed to create user record')
         }
       }
 
-      setError('Check your email to continue sign in process')
+      setError('Check your email for the confirmation link.')
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -112,103 +93,72 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    router.refresh()
-  }
-
-  if (session) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Already Signed In
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              You are already signed in. You can return home or sign out.
-            </p>
-          </div>
-          <div className="space-y-4">
-            <Link href="/">
-              <Button className="w-full">Return Home</Button>
-            </Link>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSignOut}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex justify-between">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Back
-          </Link>
-        </div>
-
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome back
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your credentials to continue
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md space-y-8 rounded-lg border border-border bg-card p-8 shadow-sm">
+        <div>
+          <h2 className="text-center text-3xl font-bold tracking-tight">
+            Welcome to Customerly
+          </h2>
+          <p className="mt-2 text-center text-sm text-muted-foreground">
+            Sign in to your account or create a new one
           </p>
         </div>
 
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
+          <div className="space-y-4 rounded-md">
+            <div>
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1"
+              />
+            </div>
           </div>
 
           {error && (
-            <Alert variant={error.includes('Check your email') ? 'default' : 'destructive'}>
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : 'Sign In'}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
+
             <Button
               type="button"
               variant="outline"
-              className="w-full"
               onClick={handleSignUp}
               disabled={loading}
+              className="flex-1"
             >
-              Create Account
+              {loading ? 'Signing up...' : 'Sign up'}
             </Button>
           </div>
         </form>

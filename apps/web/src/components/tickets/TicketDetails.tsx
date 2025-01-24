@@ -1,94 +1,121 @@
-import { StatusBadge } from '@/components/tickets/StatusBadge'
-import { PriorityBadge } from '@/components/tickets/PriorityBadge'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useState, type ChangeEvent } from 'react'
+import { StatusBadge } from '@/components/tickets/StatusBadge'
+import { PriorityBadge } from '@/components/tickets/PriorityBadge'
+import { type Ticket, ticketsService } from '@/services/tickets'
 
-interface Ticket {
-    id: string
-    title: string
-    status: 'new' | 'open' | 'in_progress' | 'resolved' | 'closed'
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-    requester: {
-        name: string
-        email: string
-    }
-    created_at: string
-    source: string
-    description?: string
-    messages?: Array<{
-        id: string
-        content: string
-        sender: {
-            name: string
-            email: string
-            type: 'customer' | 'agent'
-        }
-        created_at: string
-    }>
-}
-
-interface TicketDetailsProps {
+interface Props {
     ticket?: Ticket
 }
 
-export function TicketDetails({ ticket }: TicketDetailsProps) {
-    const [replyText, setReplyText] = useState('')
+export function TicketDetails({ ticket }: Props) {
+    const [replyContent, setReplyContent] = useState('')
+    const [sending, setSending] = useState(false)
 
     if (!ticket) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-                <h2 className="text-xl font-semibold mb-2">Ticket Details</h2>
-                <p className="text-muted-foreground">Select a ticket to view details</p>
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+                Select a ticket to view details
             </div>
         )
     }
 
-    const handleReply = () => {
-        // Handle reply submission
-        console.log('Submitting reply:', replyText)
-        setReplyText('')
+    const handleSendReply = async () => {
+        if (!replyContent.trim()) return
+
+        try {
+            setSending(true)
+            await ticketsService.addMessage({
+                ticket_id: ticket.id,
+                content: replyContent,
+                is_internal: false,
+                attachments: []
+            })
+            setReplyContent('')
+        } catch (error) {
+            console.error('Failed to send reply:', error)
+        } finally {
+            setSending(false)
+        }
     }
 
     return (
         <div className="flex flex-col h-full">
             {/* Ticket Header */}
-            <div className="border-b border-border p-6">
+            <div className="p-6 border-b border-border">
                 <div className="flex items-start justify-between mb-4">
-                    <h1 className="text-xl font-semibold">{ticket.title}</h1>
-                    <div className="flex items-center gap-2">
-                        <StatusBadge status={ticket.status} />
-                        <PriorityBadge priority={ticket.priority} />
+                    <div>
+                        <h1 className="text-xl font-semibold mb-2">{ticket.title}</h1>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <StatusBadge status={ticket.status} />
+                            <PriorityBadge priority={ticket.priority} />
+                            <span>#{ticket.id}</span>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>From: {ticket.requester.name}</span>
-                    <span>•</span>
-                    <span>{new Date(ticket.created_at).toLocaleString()}</span>
-                    <span>•</span>
-                    <span>Ticket #{ticket.id}</span>
+
+                <div className="flex flex-col gap-4 mt-4">
+                    <div>
+                        <div className="text-sm font-medium">Customer</div>
+                        <div className="text-sm text-muted-foreground">
+                            {ticket.customer.name} ({ticket.customer.email})
+                        </div>
+                    </div>
+
+                    {ticket.assignedAgent && (
+                        <div>
+                            <div className="text-sm font-medium">Assigned Agent</div>
+                            <div className="text-sm text-muted-foreground">
+                                {ticket.assignedAgent.user.name}
+                            </div>
+                        </div>
+                    )}
+
+                    {ticket.team && (
+                        <div>
+                            <div className="text-sm font-medium">Team</div>
+                            <div className="text-sm text-muted-foreground">
+                                {ticket.team.name}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Messages Thread */}
+            {/* Message Thread */}
             <div className="flex-1 overflow-auto p-6">
                 <div className="space-y-6">
+                    {/* Initial Description */}
+                    <div className="flex gap-4">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex-shrink-0" />
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium">{ticket.customer.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {new Date(ticket.created_at).toLocaleString()}
+                                </span>
+                            </div>
+                            <div className="prose prose-sm max-w-none">
+                                {ticket.description}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Messages */}
                     {ticket.messages?.map((message) => (
-                        <div
-                            key={message.id}
-                            className={`flex ${message.sender.type === 'agent' ? 'justify-end' : 'justify-start'}`}
-                        >
-                            <div className={`max-w-2xl rounded-lg p-4 ${message.sender.type === 'agent'
-                                ? 'bg-blue-100 dark:bg-blue-900/30'
-                                : 'bg-muted'
-                                }`}>
-                                <div className="flex items-center gap-2 mb-2">
+                        <div key={message.id} className="flex gap-4">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex-shrink-0" />
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
                                     <span className="font-medium">{message.sender.name}</span>
                                     <span className="text-xs text-muted-foreground">
                                         {new Date(message.created_at).toLocaleString()}
                                     </span>
                                 </div>
-                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                <div className="prose prose-sm max-w-none">
+                                    {message.content}
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -96,17 +123,21 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
             </div>
 
             {/* Reply Box */}
-            <div className="border-t border-border p-4">
+            <div className="p-4 border-t border-border">
                 <Textarea
                     placeholder="Type your reply..."
-                    value={replyText}
-                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReplyText(e.target.value)}
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
                     className="mb-4"
                     rows={4}
                 />
                 <div className="flex justify-end gap-2">
-                    <Button variant="outline">Cancel</Button>
-                    <Button onClick={handleReply}>Send Reply</Button>
+                    <Button
+                        onClick={handleSendReply}
+                        disabled={!replyContent.trim() || sending}
+                    >
+                        {sending ? 'Sending...' : 'Send Reply'}
+                    </Button>
                 </div>
             </div>
         </div>

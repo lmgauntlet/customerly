@@ -72,5 +72,9 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
-docs/**
-/design-mocks
+drafts/
+
+# Cypress
+cypress.env
+cypress/videos
+cypress/screenshots

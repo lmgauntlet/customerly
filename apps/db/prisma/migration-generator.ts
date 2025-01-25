@@ -54,34 +54,38 @@ function run() {
             return;
         }
 
-        // Get all migration folders, sorted descending
+        // Get all migration folders except 0_init, sorted descending
         const allMigrations = fs
             .readdirSync(migrationsDir)
-            .filter((f) => fs.statSync(path.join(migrationsDir, f)).isDirectory())
+            .filter((f) => {
+                const stats = fs.statSync(path.join(migrationsDir, f));
+                return stats.isDirectory() && f !== '0_init';
+            })
             .sort((a, b) => b.localeCompare(a));
 
         if (allMigrations.length === 0) {
-            console.warn('No migrations to modify.');
+            console.warn('No migrations found to process');
             return;
         }
 
-        // Latest migration folder
+        // Get the most recent migration
         const latestMigration = allMigrations[0];
-        const migrationFilePath = path.join(migrationsDir, latestMigration, 'migration.sql');
+        const migrationPath = path.join(migrationsDir, latestMigration, 'migration.sql');
 
-        if (!fs.existsSync(migrationFilePath)) {
-            console.warn(`No migration.sql file found in ${latestMigration}`);
+        if (!fs.existsSync(migrationPath)) {
+            console.warn(`No migration.sql found in ${latestMigration}`);
             return;
         }
 
-        // Read, modify, and rewrite the migration file
-        const content = fs.readFileSync(migrationFilePath, 'utf-8');
-        const modified = addUpdatedAtTriggers(content);
-        fs.writeFileSync(migrationFilePath, modified, 'utf-8');
+        // Read and process the migration
+        const migrationContent = fs.readFileSync(migrationPath, 'utf8');
+        const modifiedContent = addUpdatedAtTriggers(migrationContent);
 
-        console.log(`Added updated_at triggers to migration: ${latestMigration}`);
-    } catch (err) {
-        console.error('Error adding updated_at triggers:', err);
+        // Write back the modified content
+        fs.writeFileSync(migrationPath, modifiedContent);
+        console.log(`✅ Successfully updated migration: ${latestMigration}`);
+    } catch (error) {
+        console.error('Error processing migration:', error);
         process.exit(1);
     }
 }

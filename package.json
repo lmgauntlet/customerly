@@ -5,9 +5,12 @@
         "build": "turbo build",
         "dev": "turbo dev",
         "lint": "turbo lint",
-        "test": "turbo test",
-        "clean": "turbo clean && rm -rf node_modules",
+        "clean": "turbo clean",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "test": "turbo test",
+        "test:ci": "turbo test:ci",
+        "test:e2e": "turbo test:e2e",
+        "test:e2e:headless": "turbo test:e2e:headless",
         "postinstall": "npm run build"
     },
     "workspaces": [
@@ -22,5 +25,12 @@
     "engines": {
         "node": ">=18.0.0",
         "npm": "10.9.2"
+    },
+    "dependencies": {
+        "class-variance-authority": "0.7.1",
+        "clsx": "2.1.1",
+        "lucide-react": "0.474.0",
+        "tailwind-merge": "2.6.0",
+        "tailwindcss-animate": "1.0.7"
     }
 }

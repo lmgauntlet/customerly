@@ -26,13 +26,17 @@ export interface Ticket {
     user: {
       name: string
       email: string
+      avatar_url?: string
     }
   }
 
   // Relations (optional as they may not be included in every query)
   customer?: {
+    id: string
     email: string
     name?: string
+    avatar_url?: string
+    organization?: string
   }
   team?: {
     name: string
@@ -41,6 +45,7 @@ export interface Ticket {
     user: {
       email: string
       name?: string
+      avatar_url?: string
     }
   }
   messages?: TicketMessage[]

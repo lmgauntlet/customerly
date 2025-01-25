@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 interface AvatarProps {
   name: string
@@ -15,31 +16,51 @@ export function Avatar({ name, email, avatarUrl, className, size = 'md' }: Avata
     lg: 'h-12 w-12'
   }
 
-  // If SVG URL is provided, render it directly in an img tag
-  if (avatarUrl?.endsWith('.svg') || avatarUrl?.includes('dicebear')) {
+  const dimensions = {
+    sm: 16,
+    md: 32,
+    lg: 48
+  }
+
+  const imageUrl = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+
+  // In test environment or for SVG images, use Next.js Image
+  if (process.env.NODE_ENV === 'test' || imageUrl.endsWith('.svg') || imageUrl.includes('dicebear')) {
     return (
-      <div className={cn('rounded-full overflow-hidden flex-shrink-0', sizeClasses[size], className)}>
-        <img
-          src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`}
+      <div 
+        className={cn(
+          'rounded-full overflow-hidden flex-shrink-0',
+          sizeClasses[size],
+          className
+        )}
+      >
+        <Image
+          src={imageUrl}
           alt={name}
-          className="w-full h-full"
+          width={dimensions[size]}
+          height={dimensions[size]}
+          className="w-full h-full object-cover"
         />
       </div>
     )
   }
 
-  // For non-SVG images, use a div with background image
+  // For non-SVG images in production, use Next.js Image
   return (
-    <div
+    <div 
       className={cn(
-        'rounded-full overflow-hidden flex-shrink-0 bg-cover bg-center bg-no-repeat',
+        'rounded-full overflow-hidden flex-shrink-0',
         sizeClasses[size],
         className
       )}
-      style={{
-        backgroundImage: `url(${avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`})`
-      }}
-      title={name}
-    />
+    >
+      <Image
+        src={imageUrl}
+        alt={name}
+        width={dimensions[size]}
+        height={dimensions[size]}
+        className="w-full h-full object-cover"
+      />
+    </div>
   )
 }

@@ -1,15 +1,43 @@
 describe('Ticket Messaging', () => {
   const TEST_USER = {
-    email: 'test@example.com',
-    password: 'password123'
+    email: Cypress.env('TEST_USER_EMAIL'),
+    password: Cypress.env('TEST_USER_PASSWORD')
   }
 
-  const TEST_TICKET_ID = 'test-ticket-123'
+  let testTicketId: string
 
   beforeEach(() => {
+    // Reset test data before each test
+    cy.resetTestData()
+    
+    // Login with test user
     cy.login(TEST_USER.email, TEST_USER.password)
-    cy.mockTicket(TEST_TICKET_ID)
-    cy.visit(`/tickets/${TEST_TICKET_ID}`)
+    
+    // Create a test ticket in Supabase
+    cy.supabase().then(async (supabase) => {
+      const { data, error } = await supabase
+        .from('tickets')
+        .insert({
+          title: 'Test Ticket',
+          description: 'Test ticket for e2e testing',
+          status: 'open',
+          is_test_data: true,
+          created_by: TEST_USER.email
+        })
+        .select()
+        .single()
+      
+      if (error) throw error
+      testTicketId = data.id
+    })
+
+    // Visit the ticket page
+    cy.visit(`/tickets/${testTicketId}`)
+  })
+
+  afterEach(() => {
+    // Clean up test data after each test
+    cy.resetTestData()
   })
 
   it('should toggle between reply and internal note modes', () => {
@@ -37,9 +65,23 @@ describe('Ticket Messaging', () => {
     cy.get('textarea').type(replyText)
     cy.get('button').contains('Send Reply').click()
 
-    // Verify the message appears in the thread
+    // Verify the message appears in the thread and in the database
     cy.contains(replyText).should('be.visible')
     cy.get('textarea').should('have.value', '') // Input should be cleared
+
+    // Verify in Supabase
+    cy.supabase().then(async (supabase) => {
+      const { data, error } = await supabase
+        .from('ticket_messages')
+        .select('*')
+        .eq('ticket_id', testTicketId)
+        .eq('message', replyText)
+        .single()
+
+      if (error) throw error
+      expect(data.is_internal).to.be.false
+      expect(data.created_by).to.equal(TEST_USER.email)
+    })
   })
 
   it('should send an internal note', () => {
@@ -52,33 +94,40 @@ describe('Ticket Messaging', () => {
     cy.get('textarea').type(noteText)
     cy.get('button').contains('Add Note').click()
 
-    // Verify the note appears in the thread with internal styling
-    cy.contains(noteText)
-      .parents('.flex')
-      .should('have.class', 'bg-[#FFF9E7]')
-      .and('have.class', 'rounded-lg')
+    // Verify the note appears in the thread and in the database
+    cy.contains(noteText).should('be.visible')
     cy.get('textarea').should('have.value', '') // Input should be cleared
+
+    // Verify in Supabase
+    cy.supabase().then(async (supabase) => {
+      const { data, error } = await supabase
+        .from('ticket_messages')
+        .select('*')
+        .eq('ticket_id', testTicketId)
+        .eq('message', noteText)
+        .single()
+
+      if (error) throw error
+      expect(data.is_internal).to.be.true
+      expect(data.created_by).to.equal(TEST_USER.email)
+    })
   })
 
   it('should receive real-time message updates', () => {
-    // Mock a new message coming in through the Supabase subscription
-    const newMessage = {
-      id: 'new-message-123',
-      content: 'New message from another user',
-      sender: {
-        name: 'Another User',
-        email: 'another@example.com'
-      },
-      created_at: new Date().toISOString(),
-      is_internal: false
-    }
+    // Create a new message in Supabase
+    cy.supabase().then(async (supabase) => {
+      const { data, error } = await supabase
+        .from('ticket_messages')
+        .insert({
+          ticket_id: testTicketId,
+          message: 'New message from another user',
+          is_internal: false,
+          created_by: 'another@example.com'
+        })
+        .select()
+        .single()
 
-    // Trigger the Supabase subscription callback
-    cy.window().then((win) => {
-      // @ts-ignore - Access the Supabase client
-      win.supabase.getSubscription('messages:test-ticket-123').subscription.callbacks[0]({
-        new: newMessage
-      })
+      if (error) throw error
     })
 
     // Verify the new message appears without refreshing

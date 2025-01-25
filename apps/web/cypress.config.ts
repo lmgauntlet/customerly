@@ -1,4 +1,8 @@
 import { defineConfig } from 'cypress'
+import { config } from 'dotenv'
+
+// Load environment variables from .env file
+config()
 
 export default defineConfig({
   e2e: {
@@ -8,7 +12,23 @@ export default defineConfig({
     video: false,
     screenshotOnRunFailure: true,
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      // Add env variables from process.env
+      config.env = {
+        ...config.env,
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        TEST_USER_EMAIL: process.env.TEST_USER_EMAIL,
+        TEST_USER_PASSWORD: process.env.TEST_USER_PASSWORD,
+        NODE_ENV: 'test'
+      }
+      
+      // Set environment variables for the app
+      process.env = {
+        ...process.env,
+        NODE_ENV: 'test'
+      }
+      
+      return config
     },
   },
   retries: {

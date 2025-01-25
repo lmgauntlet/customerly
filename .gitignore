@@ -73,3 +73,8 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 drafts/
+
+# Cypress
+cypress.env
+cypress/videos
+cypress/screenshots

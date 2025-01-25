@@ -1,86 +1,78 @@
 /// <reference types="cypress" />
-
 import '@testing-library/cypress/add-commands'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@customerly/db'
 
 declare global {
   namespace Cypress {
     interface Chainable {
       login(email: string, password: string): Chainable<void>
-      mockTicket(ticketId: string): Chainable<void>
-      mockSupabase(): Chainable<void>
+      supabase(): Chainable<SupabaseClient<Database>>
+      resetTestData(): Chainable<void>
+      verifySeededData(): Chainable<void>
     }
   }
 }
 
-// Mock Supabase authentication and real-time subscriptions
-Cypress.Commands.add('mockSupabase', () => {
-  cy.intercept('POST', '/api/auth/callback', {
-    statusCode: 200,
-    body: {
-      user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        name: 'Test User',
-        avatarUrl: null
-      },
-      session: {
-        access_token: 'test-token'
-      }
-    }
-  }).as('authCallback')
-
-  // Mock Supabase real-time subscription
-  cy.window().then((win) => {
-    const mockSubscription = {
-      unsubscribe: cy.stub().as('unsubscribe')
-    }
-    cy.stub(win.supabase, 'channel').returns({
-      on: () => mockSubscription,
-      subscribe: () => mockSubscription
-    })
-  })
+// Initialize Supabase client
+Cypress.Commands.add('supabase', () => {
+  const supabase = createClient<Database>(
+    Cypress.env('NEXT_PUBLIC_SUPABASE_URL'),
+    Cypress.env('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  )
+  return cy.wrap(supabase)
 })
 
 // Login command
 Cypress.Commands.add('login', (email: string, password: string) => {
-  cy.session([email, password], () => {
-    cy.mockSupabase()
-    cy.visit('/login')
-    cy.get('input[name="email"]').type(email)
-    cy.get('input[name="password"]').type(password)
-    cy.get('button[type="submit"]').click()
-    cy.url().should('not.include', '/login')
+  cy.supabase().then(async (supabase) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) throw error
   })
 })
 
-// Mock ticket data command
-Cypress.Commands.add('mockTicket', (ticketId: string) => {
-  cy.intercept('GET', `/api/tickets/${ticketId}`, {
-    statusCode: 200,
-    body: {
-      id: ticketId,
-      title: 'Test Ticket',
-      description: 'Test Description',
-      status: 'open',
-      priority: 'medium',
-      customer: {
-        id: 'customer-1',
-        name: 'Test Customer',
-        email: 'customer@example.com',
-        avatarUrl: null
-      },
-      messages: [],
-      created_at: new Date().toISOString(),
-      assignedAgent: {
-        user: {
-          id: 'test-user-id',
-          name: 'Test Agent',
-          email: 'agent@example.com',
-          avatarUrl: null
-        }
-      }
+// Reset test data
+Cypress.Commands.add('resetTestData', () => {
+  cy.supabase().then(async (supabase) => {
+    const tables = ['tickets', 'ticket_messages', 'teams', 'team_members']
+    for (const table of tables) {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('is_test_data', true)
+      
+      if (error) throw error
     }
-  }).as('getTicket')
+  })
+})
+
+// Verify seeded data exists
+Cypress.Commands.add('verifySeededData', () => {
+  cy.supabase().then(async (supabase) => {
+    // Verify test user exists
+    const { data: testUser, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', Cypress.env('TEST_USER_EMAIL'))
+      .single()
+
+    if (userError || !testUser) {
+      throw new Error(`Test user ${Cypress.env('TEST_USER_EMAIL')} not found`)
+    }
+
+    // Verify required data exists
+    const { data: teams, error: teamsError } = await supabase
+      .from('teams')
+      .select('*')
+      .limit(1)
+
+    if (teamsError || !teams.length) {
+      throw new Error('No teams found in database')
+    }
+  })
 })
 
 export {}

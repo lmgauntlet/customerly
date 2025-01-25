@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
@@ -21,33 +21,59 @@ export function TicketDetails({ ticket }: Props) {
     const [isInternalNote, setIsInternalNote] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [messages, setMessages] = useState<TicketMessage[]>(ticket?.messages || [])
+    const [currentUser, setCurrentUser] = useState<any>(null)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+        }
+    }
 
     useEffect(() => {
-        if (!ticket) return
+        scrollToBottom()
+    }, [messages])
 
-        // Initialize messages from ticket
-        setMessages(ticket.messages || [])
-
-        // Subscribe to message updates
-        const subscription = ticketsService.subscribeToMessages(ticket.id, (message) => {
-            setMessages(prevMessages => {
-                // Check if message already exists
-                const exists = prevMessages.some(m => m.id === message.id)
-                if (exists) {
-                    // Update existing message
-                    return prevMessages.map(m => m.id === message.id ? message : m)
-                } else {
-                    // Add new message
-                    return [...prevMessages, message]
-                }
-            })
+    useEffect(() => {
+        // Get current user
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                getUser(user).then(setCurrentUser)
+            }
         })
+    }, [])
+
+    useEffect(() => {
+        setMessages(ticket?.messages || [])
+    }, [ticket?.messages])
+
+    useEffect(() => {
+        if (!ticket?.id) return
+
+        const subscription = supabase
+            .channel(`messages:${ticket.id}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'ticket_messages',
+                filter: `ticket_id=eq.${ticket.id}`
+            }, (payload) => {
+                setMessages((prevMessages) => {
+                    const message = payload.new as TicketMessage
+                    // Only add if not already in the list
+                    if (prevMessages.find(m => m.id === message.id)) {
+                        return prevMessages
+                    }
+                    return [...prevMessages, message]
+                })
+            })
+            .subscribe()
 
         // Cleanup subscription on unmount or when ticket changes
         return () => {
             subscription.unsubscribe()
         }
-    }, [ticket?.id])
+    }, [ticket])
 
     if (!ticket) {
         return (
@@ -78,6 +104,11 @@ export function TicketDetails({ ticket }: Props) {
                 sender_id: user.id,
                 attachments: []
             })
+            
+            // Fetch latest messages after sending
+            const updatedTicket = await ticketsService.getTicket(ticket.id)
+            setMessages(updatedTicket.messages || [])
+            
             setReplyContent('')
             setIsInternalNote(false)
         } catch (error) {
@@ -102,10 +133,10 @@ export function TicketDetails({ ticket }: Props) {
                 </div>
 
                 {/* Message Thread */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6" ref={messagesContainerRef}>
                     <div className="space-y-6">
                         {/* Initial Description */}
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 max-w-2xl mx-auto">
                             <Avatar
                                 name={ticket.customer.name}
                                 email={ticket.customer.email}
@@ -114,12 +145,14 @@ export function TicketDetails({ ticket }: Props) {
                             />
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium">{ticket.customer.name}</span>
+                                    <span className="font-medium">
+                                        {ticket.customer.name}
+                                    </span>
                                     <span className="text-xs text-muted-foreground">
                                         {ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'No date'}
                                     </span>
                                 </div>
-                                <div className="prose prose-sm max-w-none">
+                                <div className="prose prose-sm max-w-none p-3 rounded-lg bg-gray-50">
                                     {ticket.description}
                                 </div>
                             </div>
@@ -127,53 +160,67 @@ export function TicketDetails({ ticket }: Props) {
 
                         {/* Messages */}
                         <div className="space-y-6">
-                            {messages.map((message) => (
-                                <div 
-                                    key={message.id} 
-                                    className={cn(
-                                        "flex gap-4",
-                                        message.is_internal ? "bg-[#FFF9E7] rounded-lg p-4" : ""
-                                    )}
-                                >
-                                    <Avatar
-                                        name={message.sender?.name || 'User'}
-                                        email={message.sender?.email || ''}
-                                        avatarUrl={message.sender?.avatarUrl}
-                                        size="md"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={cn(
-                                                "font-medium",
-                                                message.is_internal ? "text-[#8B5D23]" : ""
-                                            )}>
-                                                {message.sender?.name || message.sender?.email}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {message.created_at ? new Date(message.created_at).toLocaleString() : 'No date'}
-                                            </span>
-                                            {message.is_internal && (
-                                                <span className="text-xs text-[#8B5D23]">
-                                                    • Internal Note
-                                                </span>
-                                            )}
-                                        </div>
+                            {messages.map((message) => {
+                                const isCustomer = message.sender?.email === ticket.customer.email;
+                                const isLoggedInUser = currentUser && message.sender?.email === currentUser.email;
+                                return (
+                                    <div 
+                                        key={message.id} 
+                                        className={cn(
+                                            "flex gap-4 max-w-2xl mx-auto",
+                                            message.is_internal ? "bg-[#FFF9E7] rounded-lg p-4" : "",
+                                        )}
+                                    >
+                                        {isCustomer && (
+                                            <Avatar
+                                                name={message.sender?.name || 'User'}
+                                                email={message.sender?.email || ''}
+                                                avatarUrl={message.sender?.avatarUrl}
+                                                size="md"
+                                            />
+                                        )}
                                         <div className={cn(
-                                            "prose prose-sm max-w-none",
-                                            message.is_internal ? "text-[#8B5D23]" : ""
+                                            "flex-1",
+                                            !isCustomer ? "" : ""
                                         )}>
-                                            {message.content}
+                                            <div className={cn(
+                                                "flex items-center gap-2 mb-1",
+                                                !isCustomer ? "justify-end" : ""
+                                            )}>
+                                                <span className={cn(
+                                                    "font-medium",
+                                                    isLoggedInUser ? "text-blue-600" : ""
+                                                )}>
+                                                    {message.sender?.name || message.sender?.email}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {message.created_at ? new Date(message.created_at).toLocaleString() : 'No date'}
+                                                </span>
+                                                {message.is_internal && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        • Internal
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className={cn(
+                                                "prose prose-sm max-w-none p-3 rounded-lg",
+                                                isLoggedInUser ? "bg-blue-50" :
+                                                message.is_internal ? "bg-[#FFF9E7]" : "bg-gray-50"
+                                            )}>
+                                                {message.content}
+                                            </div>
                                         </div>
+                                        {!isCustomer && (
+                                            <Avatar
+                                                name={message.sender?.name || 'User'}
+                                                email={message.sender?.email || ''}
+                                                avatarUrl={message.sender?.avatarUrl}
+                                                size="md"
+                                            />
+                                        )}
                                     </div>
-                                    {message.is_internal && (
-                                        <div className="flex-shrink-0">
-                                            <svg className="w-5 h-5 text-[#8B5D23]" fill="none" viewBox="0 0 24 24">
-                                                <path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M8 7.5v9M12 7.5v9M16 7.5v9M3 10.5h18M3 14.5h18"/>
-                                            </svg>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

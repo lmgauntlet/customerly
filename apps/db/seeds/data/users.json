@@ -1,5 +1,19 @@
 [
     {
+        "id": "user-cypress-test",
+        "email": "lmgauntlet+cypress@gmail.com",
+        "name": "Cypress Test User",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=cypress-test",
+        "role": "admin",
+        "preferences": {
+            "notifications": {
+                "email": true,
+                "slack": true,
+                "push": true
+            }
+        }
+    },
+    {
         "id": "user-admin-liwei",
         "email": "liweimao+admin@gmail.com",
         "name": "Liwei Admin",

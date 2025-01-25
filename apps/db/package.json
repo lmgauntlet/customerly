@@ -2,6 +2,8 @@
     "name": "@customerly/db",
     "version": "0.1.0",
     "private": true,
+    "main": "dist/index.js",
+    "types": "src/types.ts",
     "scripts": {
         "clean": "rm -rf .turbo node_modules",
         "build": "echo 'No build step needed for db'",
@@ -13,6 +15,9 @@
         "db:createmigrationpost": "ts-node prisma/migration-generator.ts",
         "db:seed": "node --no-warnings=DEP0040 -r ts-node/register scripts/seed.ts",
         "db:reset": "node --no-warnings=DEP0040 -r ts-node/register scripts/reset-db.ts",
+        "db:seed-force": "node --no-warnings=DEP0040 -r ts-node/register scripts/force-seed.ts",
+        "env:use-cypress": "ts-node scripts/switch-env.ts cypress",
+        "env:use-real": "ts-node scripts/switch-env.ts real",
         "test": "jest"
     },
     "dependencies": {

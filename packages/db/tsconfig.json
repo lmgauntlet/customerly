@@ -13,11 +13,8 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "types": [
-            "node"
-        ],
-        "noImplicitAny": true,
-        "allowJs": true,
+        "declaration": true,
+        "declarationMap": true,
         "sourceMap": true,
         "baseUrl": ".",
         "paths": {
@@ -34,9 +31,11 @@
         }
     },
     "include": [
-        "**/*.ts"
+        "src/**/*.ts"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "dist",
+        "**/*.test.ts"
     ]
 }

@@ -8,7 +8,9 @@
 .turbo
 
 # testing
-/coverage
+**/coverage
+**/test-results/**
+**/playwright-report/**
 
 # next.js
 /.next/
@@ -27,7 +29,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+*.env 
+.local
 
 # vercel
 .vercel
@@ -60,6 +63,7 @@ yarn-error.log*
 # IDE and editor files
 .idea/
 .vscode/
+*.cursorrules
 *.swp
 *.swo
 *~
@@ -73,8 +77,3 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 drafts/
-
-# Cypress
-cypress.env
-cypress/videos
-cypress/screenshots

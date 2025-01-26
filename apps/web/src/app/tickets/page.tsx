@@ -109,7 +109,7 @@ export default function TicketsPage() {
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
                     ) : (
-                        <div className="divide-y divide-border">
+                        <div className="divide-y divide-border" data-testid="ticket-list">
                             {filteredTickets.map((ticket) => (
                                 <button
                                     key={ticket.id}

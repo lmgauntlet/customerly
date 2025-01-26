@@ -1,39 +1,37 @@
 # Customerly
 
-A modern, production-ready customer support platform built with Next.js and Supabase.
+A modern customer support platform built with Next.js and Supabase.
 
-## 🚀 Features
+## Features
 
-- 🔐 Authentication with Supabase
-- 🎨 Modern UI with Tailwind CSS and shadcn/ui
-- 📱 Fully responsive design
-- 🧪 Testing setup with Jest and Cypress
-- 🔄 Real-time updates
-- 🎯 TypeScript support
-- 📊 Analytics integration with Vercel
-- 🔍 E2E and Unit testing support
+- 🚀 Next.js 14 with App Router
+- 🎨 Tailwind CSS + shadcn/ui
+- 🔒 Supabase Auth
+- 📦 Turborepo
+- 🧪 Testing setup with Jest and Playwright
+- 🔄 React Query for data fetching
+- 📝 TypeScript for type safety
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Framework:** Next.js
-- **Database & Auth:** Supabase
-- **Styling:** Tailwind CSS, shadcn/ui
-- **State Management:** TanStack Query (React Query)
-- **Testing:** Jest (Unit), Cypress (E2E)
-- **Analytics:** Vercel Analytics
-- **Development Tools:**
-  - TypeScript
-  - ESLint
-  - Prettier
-  - Husky
-  - Turborepo
+- **Framework:** Next.js 14
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Database:** Supabase
+- **Authentication:** Supabase Auth
+- **State Management:** React Query
+- **Testing:** Jest (Unit), Playwright (E2E)
+- **Build Tool:** Turborepo
+- **Language:** TypeScript
 
-## 📦 Prerequisites
+## Getting Started
 
-- Node.js >= 18.0.0
-- npm 10.9.2
+### Prerequisites
 
-## 🚀 Getting Started
+- Node.js >= 18
+- npm >= 10.9.2
+- Supabase project
+
+### Installation
 
 1. Clone the repository:
 ```bash
@@ -46,36 +44,23 @@ cd customerly
 npm install
 ```
 
-3. Copy the environment files:
+3. Copy environment files:
 ```bash
 cp apps/web/.env.example apps/web/.env
-cp apps/web/cypress.env.example apps/web/cypress.env
+cp apps/db/.env.example apps/db/.env
+cp apps/web/test.env.example apps/web/test.env
 ```
 
-4. Update the environment variables in `.env` with your Supabase credentials
+4. Update the environment files with your Supabase credentials
 
-5. Start the development server:
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-## 🧪 Testing
+## Development
 
-- Run unit tests:
-```bash
-npm test
-```
-
-- Run E2E tests with Cypress:
-```bash
-# Interactive mode
-npm run test:e2e
-
-# Headless mode
-npm run test:e2e:headless
-```
-
-## 📝 Scripts
+### Available Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
@@ -83,35 +68,45 @@ npm run test:e2e:headless
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
 - `npm run test` - Run Jest tests
-- `npm run test:e2e` - Run Cypress tests
-- `npm run analyze` - Analyze bundle size
+- `npm run test:e2e` - Run Playwright tests
 
-## 🏗️ Project Structure
+### Project Structure
 
 ```
 customerly/
 ├── apps/
-│   └── web/              # Next.js web application
-│       ├── src/          # Source code
-│       ├── public/       # Static files
-│       ├── cypress/      # E2E tests
-│       └── markdowns/    # Documentation
-├── docs/                 # Project documentation
-└── turbo.json           # Turborepo configuration
+│   ├── web/           # Next.js frontend
+│   │   ├── src/
+│   │   │   ├── app/        # Next.js App Router
+│   │   │   ├── components/ # React components
+│   │   │   └── lib/       # Utility functions
+│   │   ├── e2e/           # Playwright tests
+│   │   └── public/        # Static files
+│   └── db/            # Database layer
+│       ├── prisma/    # Prisma schema
+│       └── seeds/     # Database seeds
+└── packages/         # Shared packages
 ```
 
-## 🤝 Contributing
+## Testing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Unit Tests
+```bash
+npm run test
+```
 
-## 📄 License
+### E2E Tests
+```bash
+npm run test:e2e
+```
+
+## Contributing
+
+1. Create a feature branch
+2. Commit your changes
+3. Push to the branch
+4. Open a Pull Request
+
+## License
 
 This project is licensed under the MIT License.
-
-## 👨‍💻 Author
-
-Michael Troya ([@michaeltroya](https://twitter.com/michaeltroya))

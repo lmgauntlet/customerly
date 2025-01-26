@@ -27,6 +27,7 @@ describe('createUserRecord', () => {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn(),
+            insert: jest.fn().mockReturnThis(),
         }
 
             // Set up the createServerClient mock
@@ -53,14 +54,15 @@ describe('createUserRecord', () => {
     })
 
     it('should return error when user does not exist', async () => {
-        // Mock no user found
-        mockSupabase.single.mockResolvedValue({ data: null })
+        // Mock no user found and failed insert
+        mockSupabase.single.mockResolvedValueOnce({ data: null })
+        mockSupabase.single.mockResolvedValueOnce({ error: new Error('Insert failed') })
 
         const result = await createUserRecord('auth-id', 'test@example.com')
 
         expect(result).toEqual({
             success: false,
-            error: 'User not found',
+            error: 'Insert failed',
         })
     })
 

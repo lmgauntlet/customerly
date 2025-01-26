@@ -1,4 +1,6 @@
-# Customerly Web Application
+# Customerly Web App
+
+The Next.js frontend application for Customerly.
 
 <p align="center">
  A modern customer support platform built with Next.js and Supabase
@@ -94,20 +96,20 @@ web/
 
 ### Unit Tests
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm test -- --watch
+# Run Jest tests
+npm run test
 ```
 
 ### E2E Tests
 ```bash
-# Open Cypress
-npm run cypress
+# Run Playwright tests
+npm run test:e2e
 
-# Run headless
-npm run cypress:headless
+# Run with UI
+npm run test:e2e:ui
+
+# Run in debug mode
+npm run test:e2e:debug
 ```
 
 ## Environment Variables

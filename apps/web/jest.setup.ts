@@ -4,6 +4,19 @@ import { QueryCache } from '@tanstack/react-query'
 import '@testing-library/jest-dom'
 
 const queryCache = new QueryCache()
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter() {
+    return {
+      push: jest.fn(),
+      replace: jest.fn(),
+      refresh: jest.fn(),
+    }
+  },
+  redirect: jest.fn(),
+}))
+
 // Establish API mocking before all tests.
 beforeAll(() => server.listen())
 // Reset any request handlers that we may add during the tests,

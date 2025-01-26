@@ -1,9 +1,9 @@
 [
     {
-        "id": "user-cypress-test",
-        "email": "lmgauntlet+cypress@gmail.com",
-        "name": "Cypress Test User",
-        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=cypress-test",
+        "id": "user-playwright-test",
+        "email": "lmgauntlet+test@gmail.com",
+        "name": "Test User",
+        "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=test-user",
         "role": "admin",
         "preferences": {
             "notifications": {
@@ -11,7 +11,9 @@
                 "slack": true,
                 "push": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-admin-liwei",
@@ -25,7 +27,9 @@
                 "slack": true,
                 "push": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-customer-liwei",
@@ -37,7 +41,9 @@
             "notifications": {
                 "email": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-admin-lmgauntlet",
@@ -51,7 +57,9 @@
                 "slack": true,
                 "push": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-agent-alex",
@@ -64,7 +72,9 @@
                 "email": true,
                 "slack": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-agent-maria",
@@ -77,7 +87,9 @@
                 "email": true,
                 "slack": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-agent-nina",
@@ -90,7 +102,9 @@
                 "email": true,
                 "slack": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-customer-john",
@@ -102,7 +116,9 @@
             "notifications": {
                 "email": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     },
     {
         "id": "user-customer-carlos",
@@ -114,6 +130,8 @@
             "notifications": {
                 "email": true
             }
-        }
+        },
+        "created_at": "2024-01-24T00:00:00.000Z",
+        "updated_at": "2024-01-24T00:00:00.000Z"
     }
 ]

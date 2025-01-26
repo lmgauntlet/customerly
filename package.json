@@ -14,7 +14,8 @@
         "postinstall": "npm run build"
     },
     "workspaces": [
-        "apps/*"
+        "apps/*",
+        "packages/*"
     ],
     "devDependencies": {
         "prettier": "3.2.5",

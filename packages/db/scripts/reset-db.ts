@@ -11,6 +11,18 @@ async function resetDb() {
     const client = await pool.connect();
 
     try {
+        // First terminate idle connections
+        const terminateSQL = `
+            SELECT pg_terminate_backend(PSA.pid)
+            FROM pg_locks AS PL
+                INNER JOIN pg_stat_activity AS PSA ON PSA.pid = PL.pid
+            WHERE PSA.state LIKE 'idle'
+                AND PL.objid IN (72707369);
+        `;
+
+        await client.query(terminateSQL);
+        console.log('Terminated idle connections...');
+
         console.log('Dropping all tables in public schema...');
 
         const dropAllSQL = `

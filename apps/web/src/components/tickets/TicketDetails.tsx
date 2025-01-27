@@ -8,8 +8,12 @@ import { PriorityBadge } from '@/components/tickets/PriorityBadge'
 import { Avatar } from '@/components/ui/avatar'
 import { type Ticket, type TicketMessage, ticketsService } from '@/services/tickets'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/lib/supabase'
+import { createBrowserClient } from '@/lib/supabase'
 import { getUser } from '@/lib/auth'
+import { Loader2 } from 'lucide-react'
+
+// Initialize Supabase client
+const supabase = createBrowserClient()
 
 interface Props {
     ticket?: Ticket
@@ -22,6 +26,10 @@ export function TicketDetails({ ticket }: Props) {
     const [error, setError] = useState<string | null>(null)
     const [messages, setMessages] = useState<TicketMessage[]>(ticket?.messages || [])
     const [currentUser, setCurrentUser] = useState<any>(null)
+    const [attachments, setAttachments] = useState<File[]>([])
+    const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
+    const [isLoading, setIsLoading] = useState(true)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
@@ -35,12 +43,29 @@ export function TicketDetails({ ticket }: Props) {
     }, [messages])
 
     useEffect(() => {
-        // Get current user
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user) {
-                getUser(user).then(setCurrentUser)
+        // Check auth and get current user
+        const checkAuth = async () => {
+            try {
+                setIsLoading(true)
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+                if (sessionError) throw sessionError
+                if (!session) {
+                    setError('You must be logged in to view tickets')
+                    return
+                }
+
+                const user = await getUser(session.user)
+                setCurrentUser(user)
+                setError(null)
+            } catch (err) {
+                console.error('Auth error:', err)
+                setError('Authentication failed')
+            } finally {
+                setIsLoading(false)
             }
-        })
+        }
+
+        checkAuth()
     }, [])
 
     useEffect(() => {
@@ -75,6 +100,30 @@ export function TicketDetails({ ticket }: Props) {
         }
     }, [ticket])
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-red-500">{error}</div>
+            </div>
+        )
+    }
+
+    if (!currentUser) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-red-500">You must be logged in to view tickets</div>
+            </div>
+        )
+    }
+
     if (!ticket) {
         return (
             <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -83,8 +132,42 @@ export function TicketDetails({ ticket }: Props) {
         )
     }
 
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const newFiles = Array.from(e.target.files)
+            setAttachments(prev => [...prev, ...newFiles])
+        }
+    }
+
+    const handleRemoveFile = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index))
+    }
+
+    const uploadFile = async (file: File): Promise<string> => {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `tickets/${ticket?.id}/${fileName}`
+
+        const { error: uploadError, data } = await supabase.storage
+            .from('customerly')
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            })
+
+        if (uploadError) {
+            throw uploadError
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('customerly')
+            .getPublicUrl(filePath)
+
+        return publicUrl
+    }
+
     const handleSendReply = async () => {
-        if (!replyContent.trim()) return
+        if (!replyContent.trim() && attachments.length === 0) return
 
         try {
             setSending(true)
@@ -96,21 +179,26 @@ export function TicketDetails({ ticket }: Props) {
                 throw new Error('You must be logged in to send messages')
             }
 
+            // Upload attachments first
+            const uploadedUrls = await Promise.all(attachments.map(uploadFile))
+
             const user = await getUser(authUser)
             await ticketsService.addMessage({
-                ticket_id: ticket.id,
+                ticket_id: ticket!.id,
                 content: replyContent,
                 is_internal: isInternalNote,
                 sender_id: user.id,
-                attachments: []
+                attachments: uploadedUrls
             })
             
             // Fetch latest messages after sending
-            const updatedTicket = await ticketsService.getTicket(ticket.id)
+            const updatedTicket = await ticketsService.getTicket(ticket!.id)
             setMessages(updatedTicket.messages || [])
             
             setReplyContent('')
             setIsInternalNote(false)
+            setAttachments([])
+            setUploadProgress({})
         } catch (error) {
             console.error('Failed to send reply:', error)
             setError('Failed to send message. Please try again.')
@@ -208,6 +296,27 @@ export function TicketDetails({ ticket }: Props) {
                                                 message.is_internal ? "bg-[#FFF9E7]" : "bg-gray-50"
                                             )}>
                                                 {message.content}
+                                                {message.attachments && message.attachments.length > 0 && (
+                                                    <div className="mt-3 space-y-2">
+                                                        {message.attachments.map((url, index) => {
+                                                            const fileName = url.split('/').pop() || 'file'
+                                                            return (
+                                                                <a
+                                                                    key={index}
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                                    </svg>
+                                                                    {decodeURIComponent(fileName)}
+                                                                </a>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         {!isCustomer && (
@@ -272,16 +381,65 @@ export function TicketDetails({ ticket }: Props) {
                         />
                         <div className="flex items-center justify-between p-2 border-t">
                             <div className="flex items-center gap-2">
-                                {/* Add attachment button here in the future */}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    multiple
+                                    onChange={handleFileSelect}
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    Attach
+                                </Button>
+                                {attachments.length > 0 && (
+                                    <div className="flex gap-2 items-center">
+                                        {attachments.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs"
+                                            >
+                                                <span className="truncate max-w-[100px]">{file.name}</span>
+                                                {uploadProgress[file.name] > 0 && uploadProgress[file.name] < 100 && (
+                                                    <span className="text-muted-foreground">
+                                                        {uploadProgress[file.name]}%
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => handleRemoveFile(index)}
+                                                    className="text-muted-foreground hover:text-foreground"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <Button
                                 onClick={handleSendReply}
-                                disabled={!replyContent.trim() || sending}
+                                disabled={(!replyContent.trim() && attachments.length === 0) || sending}
                                 className={cn(
                                     isInternalNote ? "bg-[#8B5D23] hover:bg-[#704B1C] text-white" : ""
                                 )}
                             >
-                                {sending ? 'Sending...' : isInternalNote ? 'Add Note' : 'Send Reply'}
+                                {sending ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    isInternalNote ? 'Add Note' : 'Send Reply'
+                                )}
                             </Button>
                         </div>
                     </div>

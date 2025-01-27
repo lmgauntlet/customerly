@@ -1,41 +1,38 @@
 'use server'
 
-import { createServerClient } from '@/utils/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 
 export async function createUserRecord(authUserId: string, email: string) {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient()
 
-    // Check if user exists in our database by email
-    const { data: existingUser, error: fetchError } = await supabase
+    // Check if user already exists
+    const { data: existingUser } = await supabase
         .from('users')
-        .select()
+        .select('id')
         .eq('email', email)
         .single()
 
     if (existingUser) {
-        return { success: true, user: existingUser }
+        return existingUser
     }
 
-    // If user doesn't exist, create a new one
-    const { data: newUser, error: createError } = await supabase
+    // Create new user record
+    const { data: newUser, error } = await supabase
         .from('users')
         .insert([
             {
                 id: authUserId,
                 email,
                 role: 'customer',
-                preferences: {},
-            }
+            },
         ])
         .select()
         .single()
 
-    if (createError) {
-        console.error('Error creating user:', createError)
-        return { success: false, error: createError.message }
+    if (error) {
+        throw error
     }
 
-    return { success: true, user: newUser }
+    return newUser
 }

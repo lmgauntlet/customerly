@@ -1,40 +1,30 @@
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createServerClient } from '@/utils/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 
 export default async function AuthButton() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createServerClient()
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const signOut = async () => {
     'use server'
-
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient()
     await supabase.auth.signOut()
     return redirect('/login')
   }
 
-  return user ? (
-    <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <form action={signOut}>
-        <button className="bg-btn-background hover:bg-btn-background-hover rounded-md px-4 py-2 no-underline">
-          Logout
-        </button>
-      </form>
-    </div>
+  return session ? (
+    <form action={signOut}>
+      <Button variant="ghost">Sign out</Button>
+    </form>
   ) : (
-    <Link
-      href="/login"
-      className="bg-btn-background hover:bg-btn-background-hover flex rounded-md px-3 py-2 no-underline"
-    >
-      Login
+    <Link href="/login">
+      <Button variant="ghost">Sign in</Button>
     </Link>
   )
 }

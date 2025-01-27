@@ -1,5 +1,8 @@
-import { supabase } from '@/lib/supabase'
+import { createBrowserClient } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
+
+// Initialize Supabase client
+const supabase = createBrowserClient()
 
 export interface Ticket {
     id: string

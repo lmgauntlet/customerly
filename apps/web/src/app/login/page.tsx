@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { supabase } from '@/lib/supabase'
+import { createBrowserClient } from '@/lib/supabase'
 import { createUserRecord } from './actions'
+
+// Initialize Supabase client
+const supabase = createBrowserClient()
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')

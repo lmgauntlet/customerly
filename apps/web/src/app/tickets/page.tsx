@@ -10,15 +10,47 @@ import { ChannelIcon } from '@/components/tickets/ChannelIcon'
 import { Avatar } from '@/components/ui/avatar'
 import { TicketDetails } from '@/components/tickets/TicketDetails'
 import { type Ticket, ticketsService } from '@/services/tickets'
+import { createBrowserClient } from '@/lib/supabase'
+
+// Initialize Supabase client
+const supabase = createBrowserClient()
 
 export default function TicketsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedTicket, setSelectedTicket] = useState<Ticket | undefined>()
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
+        // Check auth state
+        const checkAuth = async () => {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+            if (sessionError || !session) {
+                setError('You must be logged in to view tickets')
+                return false
+            }
+            return true
+        }
+
         // Load initial tickets
+        const loadTickets = async () => {
+            try {
+                const isAuthed = await checkAuth()
+                if (!isAuthed) return
+
+                setLoading(true)
+                const data = await ticketsService.getTickets()
+                setTickets(data)
+                setError(null)
+            } catch (error) {
+                console.error('Failed to load tickets:', error)
+                setError('Failed to load tickets')
+            } finally {
+                setLoading(false)
+            }
+        }
+
         loadTickets()
 
         // Subscribe to ticket updates
@@ -44,18 +76,6 @@ export default function TicketsPage() {
         }
     }, [selectedTicket?.id])
 
-    const loadTickets = async () => {
-        try {
-            setLoading(true)
-            const data = await ticketsService.getTickets()
-            setTickets(data)
-        } catch (error) {
-            console.error('Failed to load tickets:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
     const filteredTickets = tickets.filter(ticket => {
         if (!searchQuery) return true
         const searchLower = searchQuery.toLowerCase()
@@ -66,6 +86,14 @@ export default function TicketsPage() {
             ticket.customer.email.toLowerCase().includes(searchLower)
         )
     })
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-red-500">{error}</div>
+            </div>
+        )
+    }
 
     return (
         <div className="h-full flex">

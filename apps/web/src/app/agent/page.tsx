@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { createServerClient } from '@/utils/supabase'
+import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import type { Ticket } from '@/types/tickets'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
@@ -7,7 +7,7 @@ import { PriorityBadge } from '@/components/tickets/PriorityBadge'
 
 export default async function AgentDashboard() {
   const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createServerClient()
 
   // Get session and user data
   const {

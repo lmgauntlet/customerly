@@ -1,47 +1,16 @@
-import { createMiddlewareClient } from '@/utils/supabase'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createMiddlewareClient } from '@/lib/supabase-middleware'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(req)
+export async function middleware(request: NextRequest) {
+  const { supabase, response } = createMiddlewareClient(request)
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Auth pages are public
-  const isAuthPage = req.nextUrl.pathname === '/login'
-  if (isAuthPage) {
-    if (session) {
-      // If user is signed in, redirect to tickets
-      return NextResponse.redirect(new URL('/tickets', req.url))
-    }
-    return response
-  }
-
-  // Home page is public
-  const isHomePage = req.nextUrl.pathname === '/'
-  if (isHomePage) {
-    if (session) {
-      // If user is signed in, redirect to tickets
-      return NextResponse.redirect(new URL('/tickets', req.url))
-    }
-    return response
-  }
-
-  // API routes are public
-  if (req.nextUrl.pathname.startsWith('/api/')) {
-    return response
-  }
-
-  // If no session and not a public page, redirect to login
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', req.url))
-  }
+  // Refresh session if expired - required for Server Components
+  await supabase.auth.getSession()
 
   return response
 }
 
+// Ensure the middleware is only called for relevant paths.
 export const config = {
   matcher: [
     /*
@@ -49,8 +18,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public folder)
+     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

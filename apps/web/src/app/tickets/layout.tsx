@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
-import { supabase } from '@/lib/supabase'
+import { createBrowserClient } from '@/lib/supabase'
 import { getCurrentUser, type User } from '@/lib/auth'
+
+// Initialize Supabase client
+const supabase = createBrowserClient()
 
 interface NavItem {
     label: string

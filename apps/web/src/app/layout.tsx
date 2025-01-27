@@ -44,7 +44,7 @@ export default function RootLayout({
           <ReactQueryProvider>
             <main className="flex min-h-screen flex-col items-center">
               {children}
-              <Analytics />{' '}
+              <Analytics />
               {/* ^^ remove this if you are not deploying to vercel. See more at https://vercel.com/docs/analytics  */}
             </main>
             <ReactQueryDevtools initialIsOpen={false} />

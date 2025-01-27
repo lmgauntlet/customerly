@@ -33,7 +33,8 @@ export function TicketDetails({ ticket }: Props) {
     const [sending, setSending] = useState(false)
     const [isInternalNote, setIsInternalNote] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [messages, setMessages] = useState<TicketMessage[]>(ticket?.messages || [])
+    const [messages, setMessages] = useState<TicketMessage[]>([])
+    const [isLoadingMessages, setIsLoadingMessages] = useState(true)
     const [currentUser, setCurrentUser] = useState<any>(null)
     const [attachments, setAttachments] = useState<File[]>([])
     const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
@@ -90,7 +91,10 @@ export function TicketDetails({ ticket }: Props) {
     }, [])
 
     useEffect(() => {
-        setMessages(ticket?.messages || [])
+        if (ticket?.messages) {
+            setMessages(ticket.messages)
+            setIsLoadingMessages(false)
+        }
     }, [ticket?.messages])
 
     useEffect(() => {
@@ -98,25 +102,20 @@ export function TicketDetails({ ticket }: Props) {
         let subscription: ReturnType<typeof supabase.channel>
 
         if (ticket?.id) {
-            subscription = supabase
-                .channel(`messages:${ticket.id}`)
-                .on('postgres_changes', {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'ticket_messages',
-                    filter: `ticket_id=eq.${ticket.id}`
-                }, (payload) => {
-                    if (!mounted) return
-                    setMessages((prevMessages) => {
-                        const message = payload.new as TicketMessage
-                        // Only add if not already in the list
-                        if (prevMessages.find(m => m.id === message.id)) {
-                            return prevMessages
-                        }
-                        return [...prevMessages, message]
-                    })
+            subscription = ticketsService.subscribeToMessages(ticket.id, (message) => {
+                if (!mounted) return
+                setMessages((prevMessages) => {
+                    const messageIndex = prevMessages.findIndex(m => m.id === message.id)
+                    if (messageIndex >= 0) {
+                        // Update existing message
+                        const newMessages = [...prevMessages]
+                        newMessages[messageIndex] = message
+                        return newMessages
+                    }
+                    // Add new message
+                    return [...prevMessages, message]
                 })
-                .subscribe()
+            })
         }
 
         return () => {
@@ -279,7 +278,7 @@ export function TicketDetails({ ticket }: Props) {
             const uploadedPaths = await Promise.all(attachments.map(uploadFile))
 
             const user = await getUser(authUser)
-            await ticketsService.addMessage({
+            const newMessage = await ticketsService.addMessage({
                 ticket_id: ticket!.id,
                 content: replyContent,
                 is_internal: isInternalNote,
@@ -287,9 +286,8 @@ export function TicketDetails({ ticket }: Props) {
                 attachments: uploadedPaths
             })
             
-            // Fetch latest messages after sending
-            const updatedTicket = await ticketsService.getTicket(ticket!.id)
-            setMessages(updatedTicket.messages || [])
+            // Optimistically add the new message
+            setMessages(prev => [...prev, newMessage])
             
             setReplyContent('')
             setIsInternalNote(false)
@@ -300,6 +298,14 @@ export function TicketDetails({ ticket }: Props) {
         } finally {
             setSending(false)
         }
+    }
+
+    if (isLoadingMessages) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        )
     }
 
     return (

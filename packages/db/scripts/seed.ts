@@ -42,7 +42,6 @@ export async function emptyDb() {
                 console.error(`Error emptying ${table}:`, error)
                 throw error
             }
-            console.log(`Emptied ${table}`)
         }
 
         console.log('Database emptied successfully')
@@ -75,7 +74,6 @@ export async function seedDb(force = false) {
                 console.error(`Error seeding ${table}:`, error)
                 throw error
             }
-            console.log(`Seeded ${table}`)
         }
         console.log('Database seeding completed')
     } catch (error) {

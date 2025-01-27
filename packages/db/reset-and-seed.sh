@@ -31,13 +31,13 @@ if [ "$ENV_TYPE" = "PRODUCTION" ]; then
   fi
 fi
 
-echo "🗑️  Resetting database..."
-npx dotenv -e $ENV_FILE -- node --no-warnings=DEP0040 -r ts-node/register scripts/reset-db.ts
-
 echo "🔄 Resolving initial migration..."
 set +e
 npx dotenv -e $ENV_FILE -- prisma migrate resolve --applied 0_init
 set -e
+
+echo "🗑️  Resetting database..."
+npx dotenv -e $ENV_FILE -- node --no-warnings=DEP0040 -r ts-node/register scripts/reset-db.ts
 
 echo "📝 Creating new migration..."
 npx dotenv -e $ENV_FILE -- prisma migrate dev --create-only --name initial_schema

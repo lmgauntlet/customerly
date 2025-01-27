@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,11 +11,8 @@ import { ChannelIcon } from '@/components/tickets/ChannelIcon'
 import { Avatar } from '@/components/ui/avatar'
 import { TicketDetails } from '@/components/tickets/TicketDetails'
 import { type Ticket, ticketsService } from '@/services/tickets'
-import { createBrowserClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-
-// Initialize Supabase client
-const supabase = createBrowserClient()
 
 export default function TicketsPage() {
     const [searchQuery, setSearchQuery] = useState('')

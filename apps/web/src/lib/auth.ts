@@ -1,18 +1,15 @@
-import { createBrowserClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { User as AuthUser } from '@supabase/supabase-js'
-
-// Initialize Supabase client
-const supabase = createBrowserClient()
 
 export interface User {
   id: string
   email: string
-  name: string | null
-  avatarUrl: string | null
-  role: 'customer' | 'agent' | 'admin'
-  preferences: Record<string, unknown>
-  created_at: string
-  updated_at: string
+  name: string
+  avatarUrl?: string
+  role: 'admin' | 'agent' | 'customer'
+  preferences: Record<string, any>
+  created_at?: string
+  updated_at?: string
 }
 
 /**

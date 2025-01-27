@@ -59,14 +59,14 @@ enum WebhookStatus {
 
 // Models
 model User {
-    id          String   @id @map("id")
-    email       String   @unique
+    id          String    @id @map("id")
+    email       String    @unique
     name        String?
-    avatarUrl   String?  @map("avatar_url")
-    role        UserRole @default(customer)
-    preferences Json     @default("{}")
-    created_at  DateTime @default(now()) @db.Timestamptz(6)
-    updated_at  DateTime @default(now()) @db.Timestamptz(6)
+    avatarUrl   String?   @map("avatar_url")
+    role        UserRole? @default(customer)
+    preferences Json?     @default("{}")
+    created_at  DateTime  @default(now()) @db.Timestamptz(6)
+    updated_at  DateTime  @default(now()) @db.Timestamptz(6)
 
     // Relations
     tickets            Ticket[]           @relation("CustomerTickets")
@@ -83,7 +83,7 @@ model User {
 
 model Team {
     id            String   @id @map("id")
-    name          String
+    name          String?
     description   String?
     coverageHours Json?    @map("coverage_hours")
     managerId     String?  @map("manager_id")
@@ -103,15 +103,15 @@ model Team {
 }
 
 model Agent {
-    id             String      @id @map("id")
-    userId         String      @unique @map("user_id")
-    teamId         String?     @map("team_id")
+    id             String       @id @map("id")
+    userId         String       @unique @map("user_id")
+    teamId         String?      @map("team_id")
     skills         String[]
-    status         AgentStatus @default(online)
-    maxTickets     Int         @default(50) @map("max_tickets")
-    currentTickets Int         @default(0) @map("current_tickets")
-    created_at     DateTime    @default(now()) @map("created_at")
-    updated_at     DateTime    @default(now()) @db.Timestamptz(6)
+    status         AgentStatus? @default(online)
+    maxTickets     Int?         @default(50) @map("max_tickets")
+    currentTickets Int?         @default(0) @map("current_tickets")
+    created_at     DateTime     @default(now()) @map("created_at")
+    updated_at     DateTime     @default(now()) @db.Timestamptz(6)
 
     // Relations
     user            User          @relation(fields: [userId], references: [id])
@@ -128,9 +128,9 @@ model AgentMetric {
     id                String   @id
     agentId           String   @map("agent_id")
     date              DateTime @db.Date
-    ticketsResolved   Int      @default(0) @map("tickets_resolved")
-    avgResponseTime   Int?     @map("avg_response_time") // minutes
-    avgResolutionTime Int?     @map("avg_resolution_time") // minutes
+    ticketsResolved   Int?     @default(0) @map("tickets_resolved")
+    avgResponseTime   Int?     @map("avg_response_time")
+    avgResolutionTime Int?     @map("avg_resolution_time")
     satisfactionScore Float?   @map("satisfaction_score")
     created_at        DateTime @default(now()) @map("created_at")
 
@@ -143,11 +143,11 @@ model AgentMetric {
 
 model Ticket {
     id              String                   @id @map("id")
-    title           String
-    description     String
-    status          TicketStatus             @default(new)
-    priority        TicketPriority           @default(medium)
-    source          TicketSource
+    title           String?
+    description     String?
+    status          TicketStatus?            @default(new)
+    priority        TicketPriority?          @default(medium)
+    source          TicketSource?
     customerId      String                   @map("customer_id")
     teamId          String?                  @map("team_id")
     assignedAgentId String?                  @map("assigned_agent_id")
@@ -165,7 +165,7 @@ model Ticket {
     team          Team?           @relation(fields: [teamId], references: [id])
     assignedAgent Agent?          @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
     messages      TicketMessage[]
-    attachments   Attachment[]
+    attachments   Attachment[]    @relation("TicketAttachments")
     audit_logs    AuditLog[]
 
     @@index([status])
@@ -178,18 +178,18 @@ model Ticket {
 }
 
 model TicketMessage {
-    id          String   @id
-    ticketId    String   @map("ticket_id")
-    senderId    String   @map("sender_id")
-    content     String
-    isInternal  Boolean  @default(false) @map("is_internal")
-    attachments Json     @default("[]")
-    created_at  DateTime @default(now()) @map("created_at")
-    updated_at  DateTime @default(now()) @db.Timestamptz(6)
+    id         String   @id
+    ticketId   String   @map("ticket_id")
+    senderId   String   @map("sender_id")
+    content    String?
+    isInternal Boolean? @default(false) @map("is_internal")
+    created_at DateTime @default(now()) @map("created_at")
+    updated_at DateTime @default(now()) @db.Timestamptz(6)
 
     // Relations
-    ticket Ticket @relation(fields: [ticketId], references: [id])
-    sender User   @relation(fields: [senderId], references: [id])
+    ticket      Ticket       @relation(fields: [ticketId], references: [id])
+    sender      User         @relation(fields: [senderId], references: [id])
+    attachments Attachment[] @relation("MessageAttachments")
 
     @@index([ticketId])
     @@map("ticket_messages")
@@ -197,7 +197,7 @@ model TicketMessage {
 
 model KbCategory {
     id          String   @id
-    name        String
+    name        String?
     description String?
     parentId    String?  @map("parent_id")
     created_at  DateTime @default(now()) @map("created_at")
@@ -213,14 +213,14 @@ model KbCategory {
 
 model KbArticle {
     id              String                   @id
-    title           String
-    content         String
+    title           String?
+    content         String?
     categoryId      String                   @map("category_id")
     authorId        String                   @map("author_id")
-    status          KbStatus                 @default(draft)
-    viewCount       Int                      @default(0) @map("view_count")
-    helpfulCount    Int                      @default(0) @map("helpful_count")
-    notHelpfulCount Int                      @default(0) @map("not_helpful_count")
+    status          KbStatus?                @default(draft)
+    viewCount       Int?                     @default(0) @map("view_count")
+    helpfulCount    Int?                     @default(0) @map("helpful_count")
+    notHelpfulCount Int?                     @default(0) @map("not_helpful_count")
     searchVector    Unsupported("tsvector")?
     created_at      DateTime                 @default(now()) @map("created_at")
     updated_at      DateTime                 @default(now()) @db.Timestamptz(6)
@@ -235,12 +235,12 @@ model KbArticle {
 
 model AutomationRule {
     id         String   @id
-    name       String
+    name       String?
     teamId     String?  @map("team_id")
-    conditions Json
-    actions    Json
-    priority   Int      @default(0)
-    isActive   Boolean  @default(true) @map("is_active")
+    conditions Json?
+    actions    Json?
+    priority   Int?     @default(0)
+    isActive   Boolean? @default(true) @map("is_active")
     created_at DateTime @default(now()) @map("created_at")
     updated_at DateTime @default(now()) @db.Timestamptz(6)
 
@@ -252,12 +252,12 @@ model AutomationRule {
 
 model ResponseTemplate {
     id         String   @id
-    name       String
-    content    String
+    name       String?
+    content    String?
     creatorId  String   @map("creator_id")
     teamId     String?  @map("team_id")
-    isPublic   Boolean  @default(true) @map("is_public")
-    usageCount Int      @default(0) @map("usage_count")
+    isPublic   Boolean? @default(true) @map("is_public")
+    usageCount Int?     @default(0) @map("usage_count")
     created_at DateTime @default(now()) @map("created_at")
     updated_at DateTime @default(now()) @db.Timestamptz(6)
 
@@ -270,11 +270,11 @@ model ResponseTemplate {
 
 model AuditLog {
     id         String   @id
-    entityType String   @map("entity_type")
-    entityId   String   @map("entity_id")
-    action     String
+    entityType String?  @map("entity_type")
+    entityId   String?  @map("entity_id")
+    action     String?
     actorId    String   @map("actor_id")
-    changes    Json
+    changes    Json?
     created_at DateTime @default(now()) @map("created_at")
 
     // Relations
@@ -286,12 +286,12 @@ model AuditLog {
 }
 
 model WebhookDelivery {
-    id           String        @id
-    webhookType  String        @map("webhook_type")
-    payload      Json
-    status       WebhookStatus @default(pending)
-    errorMessage String?       @map("error_message")
-    created_at   DateTime      @default(now()) @map("created_at")
+    id           String         @id
+    webhookType  String?        @map("webhook_type")
+    payload      Json?
+    status       WebhookStatus? @default(pending)
+    errorMessage String?        @map("error_message")
+    created_at   DateTime       @default(now()) @map("created_at")
 
     @@index([webhookType], map: "idx_webhook_deliveries_type")
     @@index([status], map: "idx_webhook_deliveries_status")
@@ -299,21 +299,26 @@ model WebhookDelivery {
 }
 
 model Attachment {
-    id          String   @id
-    bucketPath  String   @map("bucket_path")
-    fileName    String   @map("filename")
-    contentType String   @map("content_type")
-    size        Int
-    entityType  String   @map("entity_type")
-    entityId    String   @map("entity_id")
-    uploaderId  String   @map("uploader_id")
-    created_at  DateTime @default(now()) @map("created_at")
+    id           String   @id
+    bucketPath   String?  @map("bucket_path")
+    fileName     String?  @map("filename")
+    originalName String?  @map("original_name")
+    contentType  String?  @map("content_type")
+    size         Int?
+    entityType   String?  @map("entity_type")
+    ticketId     String?  @map("ticket_id")
+    messageId    String?  @map("message_id")
+    uploaderId   String   @map("uploader_id")
+    created_at   DateTime @default(now()) @map("created_at")
 
     // Relations
-    uploader User   @relation(fields: [uploaderId], references: [id])
-    ticket   Ticket @relation(fields: [entityId], references: [id])
+    uploader      User           @relation(fields: [uploaderId], references: [id])
+    ticket        Ticket?        @relation("TicketAttachments", fields: [ticketId], references: [id], map: "attachments_ticket_fkey")
+    ticketMessage TicketMessage? @relation("MessageAttachments", fields: [messageId], references: [id])
 
-    @@index([entityType, entityId], map: "idx_attachments_entity")
+    @@index([entityType])
+    @@index([ticketId])
+    @@index([messageId])
     @@index([uploaderId], map: "idx_attachments_uploader")
     @@map("attachments")
 }
@@ -322,8 +327,8 @@ model DailyMetric {
     id          String   @id
     date        DateTime @db.Date
     teamId      String?  @map("team_id")
-    metricsType String   @map("metrics_type")
-    metrics     Json
+    metricsType String?  @map("metrics_type")
+    metrics     Json?
     created_at  DateTime @default(now()) @map("created_at")
 
     // Relations

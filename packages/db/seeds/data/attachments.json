@@ -5,8 +5,8 @@
         "filename": "api-rate-limit-error.png",
         "content_type": "image/png",
         "size": 245678,
-        "entity_type": "ticket",
-        "entity_id": "tick_001",
+        "entity_type": "message",
+        "message_id": "tm_001",
         "uploader_id": "user-customer-liwei",
         "created_at": "2024-02-15T10:00:00Z"
     },
@@ -16,8 +16,8 @@
         "filename": "kubernetes-cluster-logs.txt",
         "content_type": "text/plain",
         "size": 156789,
-        "entity_type": "ticket",
-        "entity_id": "tick_002",
+        "entity_type": "message",
+        "message_id": "tm_004",
         "uploader_id": "user-customer-john",
         "created_at": "2024-02-15T09:00:00Z"
     }

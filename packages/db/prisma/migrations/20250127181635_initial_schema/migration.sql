@@ -34,8 +34,8 @@ CREATE TABLE "users" (
     "email" TEXT NOT NULL,
     "name" TEXT,
     "avatar_url" TEXT,
-    "role" "UserRole" NOT NULL DEFAULT 'customer',
-    "preferences" JSONB NOT NULL DEFAULT '{}',
+    "role" "UserRole" DEFAULT 'customer',
+    "preferences" JSONB DEFAULT '{}',
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -45,7 +45,7 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "teams" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
     "description" TEXT,
     "coverage_hours" JSONB,
     "manager_id" TEXT,
@@ -61,9 +61,9 @@ CREATE TABLE "agents" (
     "user_id" TEXT NOT NULL,
     "team_id" TEXT,
     "skills" TEXT[],
-    "status" "AgentStatus" NOT NULL DEFAULT 'online',
-    "max_tickets" INTEGER NOT NULL DEFAULT 50,
-    "current_tickets" INTEGER NOT NULL DEFAULT 0,
+    "status" "AgentStatus" DEFAULT 'online',
+    "max_tickets" INTEGER DEFAULT 50,
+    "current_tickets" INTEGER DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -75,7 +75,7 @@ CREATE TABLE "agent_metrics" (
     "id" TEXT NOT NULL,
     "agent_id" TEXT NOT NULL,
     "date" DATE NOT NULL,
-    "tickets_resolved" INTEGER NOT NULL DEFAULT 0,
+    "tickets_resolved" INTEGER DEFAULT 0,
     "avg_response_time" INTEGER,
     "avg_resolution_time" INTEGER,
     "satisfaction_score" DOUBLE PRECISION,
@@ -87,11 +87,11 @@ CREATE TABLE "agent_metrics" (
 -- CreateTable
 CREATE TABLE "tickets" (
     "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "status" "TicketStatus" NOT NULL DEFAULT 'new',
-    "priority" "TicketPriority" NOT NULL DEFAULT 'medium',
-    "source" "TicketSource" NOT NULL,
+    "title" TEXT,
+    "description" TEXT,
+    "status" "TicketStatus" DEFAULT 'new',
+    "priority" "TicketPriority" DEFAULT 'medium',
+    "source" "TicketSource",
     "customer_id" TEXT NOT NULL,
     "team_id" TEXT,
     "assigned_agent_id" TEXT,
@@ -112,9 +112,8 @@ CREATE TABLE "ticket_messages" (
     "id" TEXT NOT NULL,
     "ticket_id" TEXT NOT NULL,
     "sender_id" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "is_internal" BOOLEAN NOT NULL DEFAULT false,
-    "attachments" JSONB NOT NULL DEFAULT '[]',
+    "content" TEXT,
+    "is_internal" BOOLEAN DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -124,7 +123,7 @@ CREATE TABLE "ticket_messages" (
 -- CreateTable
 CREATE TABLE "kb_categories" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
     "description" TEXT,
     "parent_id" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -136,14 +135,14 @@ CREATE TABLE "kb_categories" (
 -- CreateTable
 CREATE TABLE "kb_articles" (
     "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
+    "title" TEXT,
+    "content" TEXT,
     "category_id" TEXT NOT NULL,
     "author_id" TEXT NOT NULL,
-    "status" "KbStatus" NOT NULL DEFAULT 'draft',
-    "view_count" INTEGER NOT NULL DEFAULT 0,
-    "helpful_count" INTEGER NOT NULL DEFAULT 0,
-    "not_helpful_count" INTEGER NOT NULL DEFAULT 0,
+    "status" "KbStatus" DEFAULT 'draft',
+    "view_count" INTEGER DEFAULT 0,
+    "helpful_count" INTEGER DEFAULT 0,
+    "not_helpful_count" INTEGER DEFAULT 0,
     "searchVector" tsvector,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -154,12 +153,12 @@ CREATE TABLE "kb_articles" (
 -- CreateTable
 CREATE TABLE "automation_rules" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
     "team_id" TEXT,
-    "conditions" JSONB NOT NULL,
-    "actions" JSONB NOT NULL,
-    "priority" INTEGER NOT NULL DEFAULT 0,
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "conditions" JSONB,
+    "actions" JSONB,
+    "priority" INTEGER DEFAULT 0,
+    "is_active" BOOLEAN DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -169,12 +168,12 @@ CREATE TABLE "automation_rules" (
 -- CreateTable
 CREATE TABLE "response_templates" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
+    "name" TEXT,
+    "content" TEXT,
     "creator_id" TEXT NOT NULL,
     "team_id" TEXT,
-    "is_public" BOOLEAN NOT NULL DEFAULT true,
-    "usage_count" INTEGER NOT NULL DEFAULT 0,
+    "is_public" BOOLEAN DEFAULT true,
+    "usage_count" INTEGER DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -184,11 +183,11 @@ CREATE TABLE "response_templates" (
 -- CreateTable
 CREATE TABLE "audit_logs" (
     "id" TEXT NOT NULL,
-    "entity_type" TEXT NOT NULL,
-    "entity_id" TEXT NOT NULL,
-    "action" TEXT NOT NULL,
+    "entity_type" TEXT,
+    "entity_id" TEXT,
+    "action" TEXT,
     "actor_id" TEXT NOT NULL,
-    "changes" JSONB NOT NULL,
+    "changes" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
@@ -197,9 +196,9 @@ CREATE TABLE "audit_logs" (
 -- CreateTable
 CREATE TABLE "webhook_deliveries" (
     "id" TEXT NOT NULL,
-    "webhook_type" TEXT NOT NULL,
-    "payload" JSONB NOT NULL,
-    "status" "WebhookStatus" NOT NULL DEFAULT 'pending',
+    "webhook_type" TEXT,
+    "payload" JSONB,
+    "status" "WebhookStatus" DEFAULT 'pending',
     "error_message" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -209,12 +208,14 @@ CREATE TABLE "webhook_deliveries" (
 -- CreateTable
 CREATE TABLE "attachments" (
     "id" TEXT NOT NULL,
-    "bucket_path" TEXT NOT NULL,
-    "filename" TEXT NOT NULL,
-    "content_type" TEXT NOT NULL,
-    "size" INTEGER NOT NULL,
-    "entity_type" TEXT NOT NULL,
-    "entity_id" TEXT NOT NULL,
+    "bucket_path" TEXT,
+    "filename" TEXT,
+    "original_name" TEXT,
+    "content_type" TEXT,
+    "size" INTEGER,
+    "entity_type" TEXT,
+    "ticket_id" TEXT,
+    "message_id" TEXT,
     "uploader_id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -226,8 +227,8 @@ CREATE TABLE "daily_metrics" (
     "id" TEXT NOT NULL,
     "date" DATE NOT NULL,
     "team_id" TEXT,
-    "metrics_type" TEXT NOT NULL,
-    "metrics" JSONB NOT NULL,
+    "metrics_type" TEXT,
+    "metrics" JSONB,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "daily_metrics_pkey" PRIMARY KEY ("id")
@@ -285,7 +286,13 @@ CREATE INDEX "idx_webhook_deliveries_type" ON "webhook_deliveries"("webhook_type
 CREATE INDEX "idx_webhook_deliveries_status" ON "webhook_deliveries"("status");
 
 -- CreateIndex
-CREATE INDEX "idx_attachments_entity" ON "attachments"("entity_type", "entity_id");
+CREATE INDEX "attachments_entity_type_idx" ON "attachments"("entity_type");
+
+-- CreateIndex
+CREATE INDEX "attachments_ticket_id_idx" ON "attachments"("ticket_id");
+
+-- CreateIndex
+CREATE INDEX "attachments_message_id_idx" ON "attachments"("message_id");
 
 -- CreateIndex
 CREATE INDEX "idx_attachments_uploader" ON "attachments"("uploader_id");
@@ -342,13 +349,16 @@ ALTER TABLE "response_templates" ADD CONSTRAINT "response_templates_team_id_fkey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "tickets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "tickets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_uploader_id_fkey" FOREIGN KEY ("uploader_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "attachments" ADD CONSTRAINT "attachments_entity_id_fkey" FOREIGN KEY ("entity_id") REFERENCES "tickets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "attachments" ADD CONSTRAINT "attachments_ticket_fkey" FOREIGN KEY ("ticket_id") REFERENCES "tickets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "attachments" ADD CONSTRAINT "attachments_message_id_fkey" FOREIGN KEY ("message_id") REFERENCES "ticket_messages"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "daily_metrics" ADD CONSTRAINT "daily_metrics_team_id_fkey" FOREIGN KEY ("team_id") REFERENCES "teams"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -1,10 +1,14 @@
 import { Pool } from 'pg';
 import { config } from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
 config();
 
+console.log('Using DATABASE_URL:', process.env.DIRECT_URL);
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
+    connectionString: process.env.DIRECT_URL
 });
 
 async function resetDb() {
@@ -67,6 +71,28 @@ async function resetDb() {
 
         await client.query(dropAllSQL);
         console.log('All tables and types in public schema dropped successfully');
+
+        // Remove migration files except 0_init
+        try {
+            const migrationsDir = path.join(__dirname, '..', 'prisma', 'migrations');
+            if (fs.existsSync(migrationsDir)) {
+                const files = fs.readdirSync(migrationsDir);
+                for (const file of files) {
+                    try {
+                        const filePath = path.join(migrationsDir, file);
+                        if (fs.statSync(filePath).isDirectory() && !file.endsWith('0_init')) {
+                            fs.rmSync(filePath, { recursive: true, force: true });
+                            console.log(`Removed migration directory: ${file}`);
+                        }
+                    } catch (err) {
+                        console.log(`Skipping migration directory ${file}: ${err.message}`);
+                    }
+                }
+            }
+        } catch (err) {
+            console.log(`Warning: Could not clean up migration files: ${err.message}`);
+        }
+
         return true;
     } catch (error) {
         console.error('Error resetting database:', error);

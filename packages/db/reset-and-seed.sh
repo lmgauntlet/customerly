@@ -1,14 +1,24 @@
 #!/bin/bash
 
-# Load environment variables
-source .env
+# Exit immediately if a command exits with a non-zero status
+set -e
 
-# Check if we're in a test environment
-if [ "$NODE_ENV" = "test" ]; then
+# Check for environment argument
+ENV_FILE=".env"
+if [ "$1" = "test" ]; then
+  ENV_FILE="test.env"
   ENV_TYPE="TEST"
 else
   ENV_TYPE="PRODUCTION"
 fi
+
+# Check if env file exists
+if [ ! -f "$ENV_FILE" ]; then
+  echo "❌ Error: $ENV_FILE not found"
+  exit 1
+fi
+
+echo "📁 Using environment file: $ENV_FILE"
 
 # Warn if we're in production
 if [ "$ENV_TYPE" = "PRODUCTION" ]; then
@@ -21,10 +31,24 @@ if [ "$ENV_TYPE" = "PRODUCTION" ]; then
   fi
 fi
 
-echo "🗑️  Dropping database..."
-npx prisma db push --force-reset
+echo "🗑️  Resetting database..."
+npx dotenv -e $ENV_FILE -- node --no-warnings=DEP0040 -r ts-node/register scripts/reset-db.ts
+
+echo "🔄 Resolving initial migration..."
+set +e
+npx dotenv -e $ENV_FILE -- prisma migrate resolve --applied 0_init
+set -e
+
+echo "📝 Creating new migration..."
+npx dotenv -e $ENV_FILE -- prisma migrate dev --create-only --name initial_schema
+
+echo "📝 Running post-migration tasks..."
+npx dotenv -e $ENV_FILE -- ts-node prisma/migration-generator.ts
+
+echo "🔄 Applying migrations..."
+npx dotenv -e $ENV_FILE -- prisma migrate deploy
 
 echo "🌱 Seeding database..."
-npx prisma db seed
+npx dotenv -e $ENV_FILE -- node --no-warnings=DEP0040 -r ts-node/register scripts/seed.ts
 
 echo "✅ Database reset and seeded successfully!"

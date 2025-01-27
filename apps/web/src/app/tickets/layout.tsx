@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
 import { createBrowserClient } from '@/lib/supabase'
 import { getCurrentUser, type User } from '@/lib/auth'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 
 // Initialize Supabase client
 const supabase = createBrowserClient()
@@ -116,94 +117,104 @@ export default function TicketsLayout({
     }
 
     return (
-        <div className="fixed inset-0 flex bg-background">
+        <ResizablePanelGroup direction="horizontal">
             {/* Main Left Panel - Primary Navigation */}
-            <div className="w-[240px] flex flex-col border-r border-border bg-card">
-                <div className="flex h-16 items-center justify-between border-b border-border px-4">
-                    <Link href="/" className="text-xl font-bold text-primary">
-                        Customerly
-                    </Link>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSignOut}
-                    >
-                        Sign Out
-                    </Button>
-                </div>
-
-                {/* Main Navigation Items */}
-                <nav className="space-y-1 p-4">
-                    {mainNavItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
-                                item.href === '/tickets'
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-muted-foreground hover:bg-accent"
-                            )}
-                        >
-                            {item.icon}
-                            {item.label}
+            <ResizablePanel defaultSize={15} minSize={10}>
+                <div className="h-full flex flex-col bg-card">
+                    <div className="flex h-16 items-center justify-between border-b border-border px-4">
+                        <Link href="/" className="text-xl font-bold text-primary">
+                            Customerly
                         </Link>
-                    ))}
-                </nav>
-
-                {/* User Profile Section */}
-                <div className="border-t border-border p-4">
-                    <div className="flex items-center gap-3">
-                        <Avatar
-                            name={currentUser?.name ?? currentUser?.email ?? ''}
-                            email={currentUser?.email ?? ''}
-                            avatarUrl={currentUser?.avatarUrl ?? undefined}
-                        />
-                        <div className="flex-1">
-                            <p className="text-sm font-medium">{currentUser?.name ?? currentUser?.email}</p>
-                            <p className="text-xs text-muted-foreground">Online</p>
-                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSignOut}
+                        >
+                            Sign Out
+                        </Button>
                     </div>
-                </div>
-            </div>
 
-            {/* Secondary Left Panel - Ticket Views */}
-            <div className="w-[240px] flex flex-col border-r border-border bg-card/50">
-                <div className="flex h-16 items-center px-6 border-b border-border">
-                    <h2 className="text-lg font-semibold">Views</h2>
-                </div>
-                <nav className="p-4">
-                    <div className="space-y-1">
-                        {ticketViews.map((view) => (
-                            <button
-                                key={view.label}
-                                onClick={() => setSelectedView(view.label)}
+                    {/* Main Navigation Items */}
+                    <nav className="space-y-1 p-4">
+                        {mainNavItems.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
                                 className={cn(
-                                    "flex w-full items-center justify-between rounded-lg px-4 py-2 text-sm font-medium",
-                                    selectedView === view.label
+                                    "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
+                                    item.href === '/tickets'
                                         ? "bg-primary/10 text-primary"
                                         : "text-muted-foreground hover:bg-accent"
                                 )}
                             >
-                                <span>{view.label}</span>
-                                <span className={cn(
-                                    "rounded-full px-2 py-0.5 text-xs",
-                                    selectedView === view.label
-                                        ? "bg-primary/20"
-                                        : "bg-muted"
-                                )}>
-                                    {view.count}
-                                </span>
-                            </button>
+                                {item.icon}
+                                {item.label}
+                            </Link>
                         ))}
+                    </nav>
+
+                    {/* User Profile Section */}
+                    <div className="mt-auto border-t border-border p-4">
+                        <div className="flex items-center gap-3">
+                            <Avatar
+                                name={currentUser?.name ?? currentUser?.email ?? ''}
+                                email={currentUser?.email ?? ''}
+                                avatarUrl={currentUser?.avatarUrl ?? undefined}
+                            />
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{currentUser?.name ?? currentUser?.email}</p>
+                                <p className="text-xs text-muted-foreground">Online</p>
+                            </div>
+                        </div>
                     </div>
-                </nav>
-            </div>
+                </div>
+            </ResizablePanel>
+
+            <ResizableHandle />
+
+            {/* Secondary Left Panel - Ticket Views */}
+            <ResizablePanel defaultSize={15} minSize={10}>
+                <div className="h-full flex flex-col bg-card/50">
+                    <div className="flex h-16 items-center px-6 border-b border-border">
+                        <h2 className="text-lg font-semibold">Views</h2>
+                    </div>
+                    <nav className="p-4">
+                        <div className="space-y-1">
+                            {ticketViews.map((view) => (
+                                <button
+                                    key={view.label}
+                                    onClick={() => setSelectedView(view.label)}
+                                    className={cn(
+                                        "flex w-full items-center justify-between rounded-lg px-4 py-2 text-sm font-medium",
+                                        selectedView === view.label
+                                            ? "bg-primary/10 text-primary"
+                                            : "text-muted-foreground hover:bg-accent"
+                                    )}
+                                >
+                                    <span>{view.label}</span>
+                                    <span className={cn(
+                                        "rounded-full px-2 py-0.5 text-xs",
+                                        selectedView === view.label
+                                            ? "bg-primary/20"
+                                            : "bg-muted"
+                                    )}>
+                                        {view.count}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+                </div>
+            </ResizablePanel>
+
+            <ResizableHandle />
 
             {/* Main Content Area */}
-            <div className="flex-1">
-                {children}
-            </div>
-        </div>
+            <ResizablePanel defaultSize={70}>
+                <div className="h-full">
+                    {children}
+                </div>
+            </ResizablePanel>
+        </ResizablePanelGroup>
     )
 }

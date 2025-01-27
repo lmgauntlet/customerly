@@ -23,56 +23,63 @@ export default function TicketsPage() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        // Check auth state
-        const checkAuth = async () => {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-            if (sessionError || !session) {
-                setError('You must be logged in to view tickets')
-                return false
-            }
-            return true
-        }
+        let mounted = true
+        let channel: ReturnType<typeof ticketsService.subscribeToTickets>
 
-        // Load initial tickets
-        const loadTickets = async () => {
+        const loadData = async () => {
             try {
-                const isAuthed = await checkAuth()
-                if (!isAuthed) return
-
                 setLoading(true)
+                // Check auth first
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+                if (sessionError || !session) {
+                    setError('You must be logged in to view tickets')
+                    return
+                }
+
+                // Load tickets
                 const data = await ticketsService.getTickets()
-                setTickets(data)
-                setError(null)
+                if (mounted) {
+                    setTickets(data)
+                    setError(null)
+                }
+
+                // Subscribe to updates
+                channel = ticketsService.subscribeToTickets((updatedTicket) => {
+                    if (!mounted) return
+                    setTickets(currentTickets => {
+                        const index = currentTickets.findIndex(t => t.id === updatedTicket.id)
+                        if (index === -1) {
+                            return [updatedTicket, ...currentTickets]
+                        }
+                        const newTickets = [...currentTickets]
+                        newTickets[index] = updatedTicket
+                        return newTickets
+                    })
+
+                    // Update selected ticket if it was updated
+                    if (selectedTicket?.id === updatedTicket.id) {
+                        setSelectedTicket(updatedTicket)
+                    }
+                })
             } catch (error) {
                 console.error('Failed to load tickets:', error)
-                setError('Failed to load tickets')
+                if (mounted) {
+                    setError('Failed to load tickets')
+                }
             } finally {
-                setLoading(false)
+                if (mounted) {
+                    setLoading(false)
+                }
             }
         }
 
-        loadTickets()
-
-        // Subscribe to ticket updates
-        const channel = ticketsService.subscribeToTickets((updatedTicket) => {
-            setTickets(currentTickets => {
-                const index = currentTickets.findIndex(t => t.id === updatedTicket.id)
-                if (index === -1) {
-                    return [updatedTicket, ...currentTickets]
-                }
-                const newTickets = [...currentTickets]
-                newTickets[index] = updatedTicket
-                return newTickets
-            })
-
-            // Update selected ticket if it was updated
-            if (selectedTicket?.id === updatedTicket.id) {
-                setSelectedTicket(updatedTicket)
-            }
-        })
+        loadData()
 
         return () => {
-            channel.unsubscribe()
+            mounted = false
+            if (channel) {
+                channel.unsubscribe()
+            }
         }
     }, [selectedTicket?.id])
 

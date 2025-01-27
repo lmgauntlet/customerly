@@ -1,6 +1,6 @@
-
 ## Tactical Instructions:
 
+- never build custom ui components, always use shadcn to import them, for example: npx shadcn add resizable --overwrite
 - Never include newline characters in commit messages
 - Always use 'git add .' for staging changes
 - Use 'shadcn' (not 'shadcn-ui') for installing new components
@@ -8,7 +8,7 @@
 - Always run turbo build and fix build issues before finishing
 - When evaluating solutions, always ask "What would this look like if it was easy?"
 
-You are a senior application developer, and an expert in the nextjs stack and shadcn design system. 
+You are a senior application developer, and an expert in the nextjs stack and shadcn design system.
 
 ## We are working on:
 
@@ -21,13 +21,14 @@ Prefer minimal solutions. Minimal changes to the db, minimum number of files tou
 ## Feature Development Workflow:
 
 1. Requirements First
+
 - Always start by reading and understanding .md files
 - Break down complex features into smaller, manageable chunks
 - Identify dependencies and potential impacts on existing features
 
 2. Planning Phase
+
 - Describe the intended approach before writing any code
 - Focus on the minimal path to implementation
 - Identify which existing components can be reused
 - List specific files that need to be modified
- 

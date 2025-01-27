@@ -11,6 +11,11 @@ const nextConfig = {
         hostname: 'api.dicebear.com',
         pathname: '/7.x/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/object/**',
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

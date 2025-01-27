@@ -10,7 +10,15 @@ import { type Ticket, type TicketMessage, ticketsService } from '@/services/tick
 import { cn } from '@/lib/utils'
 import { createBrowserClient } from '@/lib/supabase'
 import { getUser } from '@/lib/auth'
-import { Loader2 } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
+import Image from 'next/image'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogClose
+} from "@/components/ui/dialog"
 
 // Initialize Supabase client
 const supabase = createBrowserClient()
@@ -29,6 +37,8 @@ export function TicketDetails({ ticket }: Props) {
     const [attachments, setAttachments] = useState<File[]>([])
     const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
     const [isLoading, setIsLoading] = useState(true)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [previewOpen, setPreviewOpen] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -43,8 +53,9 @@ export function TicketDetails({ ticket }: Props) {
     }, [messages])
 
     useEffect(() => {
-        // Check auth and get current user
-        const checkAuth = async () => {
+        let mounted = true
+
+        const loadUser = async () => {
             try {
                 setIsLoading(true)
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -55,17 +66,26 @@ export function TicketDetails({ ticket }: Props) {
                 }
 
                 const user = await getUser(session.user)
-                setCurrentUser(user)
-                setError(null)
+                if (mounted) {
+                    setCurrentUser(user)
+                    setError(null)
+                }
             } catch (err) {
-                console.error('Auth error:', err)
-                setError('Authentication failed')
+                if (mounted) {
+                    setError('Authentication failed')
+                }
             } finally {
-                setIsLoading(false)
+                if (mounted) {
+                    setIsLoading(false)
+                }
             }
         }
 
-        checkAuth()
+        loadUser()
+
+        return () => {
+            mounted = false
+        }
     }, [])
 
     useEffect(() => {
@@ -73,32 +93,38 @@ export function TicketDetails({ ticket }: Props) {
     }, [ticket?.messages])
 
     useEffect(() => {
-        if (!ticket?.id) return
+        let mounted = true
+        let subscription: ReturnType<typeof supabase.channel>
 
-        const subscription = supabase
-            .channel(`messages:${ticket.id}`)
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'ticket_messages',
-                filter: `ticket_id=eq.${ticket.id}`
-            }, (payload) => {
-                setMessages((prevMessages) => {
-                    const message = payload.new as TicketMessage
-                    // Only add if not already in the list
-                    if (prevMessages.find(m => m.id === message.id)) {
-                        return prevMessages
-                    }
-                    return [...prevMessages, message]
+        if (ticket?.id) {
+            subscription = supabase
+                .channel(`messages:${ticket.id}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'ticket_messages',
+                    filter: `ticket_id=eq.${ticket.id}`
+                }, (payload) => {
+                    if (!mounted) return
+                    setMessages((prevMessages) => {
+                        const message = payload.new as TicketMessage
+                        // Only add if not already in the list
+                        if (prevMessages.find(m => m.id === message.id)) {
+                            return prevMessages
+                        }
+                        return [...prevMessages, message]
+                    })
                 })
-            })
-            .subscribe()
-
-        // Cleanup subscription on unmount or when ticket changes
-        return () => {
-            subscription.unsubscribe()
+                .subscribe()
         }
-    }, [ticket])
+
+        return () => {
+            mounted = false
+            if (subscription) {
+                subscription.unsubscribe()
+            }
+        }
+    }, [ticket?.id])
 
     if (isLoading) {
         return (
@@ -144,30 +170,99 @@ export function TicketDetails({ ticket }: Props) {
     }
 
     const uploadFile = async (file: File): Promise<string> => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `tickets/${ticket?.id}/${fileName}`
+        try {
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+            const filePath = `tickets/${ticket?.id}/${fileName}`.replace(/^\/+|\/+$/g, '')
+            
+            // Upload with metadata
+            const { data, error: uploadError } = await supabase.storage
+                .from('customerly')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                    contentType: file.type,
+                    duplex: 'half',
+                    metadata: {
+                        ticket_id: ticket?.id,
+                        customer_id: ticket?.customer_id,
+                        uploaded_by: currentUser?.id,
+                        is_internal: isInternalNote,
+                        original_name: file.name,
+                        content_type: file.type
+                    }
+                })
 
-        const { error: uploadError, data } = await supabase.storage
-            .from('customerly')
-            .upload(filePath, file, {
-                cacheControl: '3600',
-                upsert: false
-            })
+            if (uploadError) {
+                throw uploadError
+            }
 
-        if (uploadError) {
-            throw uploadError
+            return filePath
+        } catch (error) {
+            throw error
         }
+    }
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('customerly')
-            .getPublicUrl(filePath)
+    const downloadFile = async (path: string, fileName: string) => {
+        try {
+            const filePath = path.includes('/storage/v1/object/public/customerly/') 
+                ? path.split('/storage/v1/object/public/customerly/')[1] 
+                : path.replace(/^\/+|\/+$/g, '')
 
-        return publicUrl
+            const { data, error } = await supabase.storage
+                .from('customerly')
+                .createSignedUrl(filePath, 60)
+
+            if (error) {
+                throw error
+            }
+
+            if (!data?.signedUrl) {
+                throw new Error('Failed to generate download URL')
+            }
+
+            // Create a temporary link and trigger download
+            const link = document.createElement('a')
+            link.href = data.signedUrl
+            link.download = fileName
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        } catch (error) {
+            setError('Failed to download file. Please try again.')
+        }
+    }
+
+    const previewImage = async (path: string) => {
+        try {
+            const filePath = path.includes('/storage/v1/object/public/customerly/') 
+                ? path.split('/storage/v1/object/public/customerly/')[1] 
+                : path.replace(/^\/+|\/+$/g, '')
+
+            const { data, error } = await supabase.storage
+                .from('customerly')
+                .createSignedUrl(filePath, 300) // URL valid for 5 minutes for viewing
+
+            if (error) {
+                throw error
+            }
+
+            if (!data?.signedUrl) {
+                throw new Error('Failed to generate preview URL')
+            }
+
+            setPreviewUrl(data.signedUrl)
+            setPreviewOpen(true)
+        } catch (error) {
+            setError('Failed to load image preview. Please try again.')
+        }
     }
 
     const handleSendReply = async () => {
-        if (!replyContent.trim() && attachments.length === 0) return
+        if (!replyContent.trim() && attachments.length === 0) {
+            setError('Please enter a message or attach a file before sending.')
+            return
+        }
 
         try {
             setSending(true)
@@ -180,7 +275,7 @@ export function TicketDetails({ ticket }: Props) {
             }
 
             // Upload attachments first
-            const uploadedUrls = await Promise.all(attachments.map(uploadFile))
+            const uploadedPaths = await Promise.all(attachments.map(uploadFile))
 
             const user = await getUser(authUser)
             await ticketsService.addMessage({
@@ -188,7 +283,7 @@ export function TicketDetails({ ticket }: Props) {
                 content: replyContent,
                 is_internal: isInternalNote,
                 sender_id: user.id,
-                attachments: uploadedUrls
+                attachments: uploadedPaths
             })
             
             // Fetch latest messages after sending
@@ -200,7 +295,6 @@ export function TicketDetails({ ticket }: Props) {
             setAttachments([])
             setUploadProgress({})
         } catch (error) {
-            console.error('Failed to send reply:', error)
             setError('Failed to send message. Please try again.')
         } finally {
             setSending(false)
@@ -298,21 +392,29 @@ export function TicketDetails({ ticket }: Props) {
                                                 {message.content}
                                                 {message.attachments && message.attachments.length > 0 && (
                                                     <div className="mt-3 space-y-2">
-                                                        {message.attachments.map((url, index) => {
-                                                            const fileName = url.split('/').pop() || 'file'
+                                                        {message.attachments.map((path, index) => {
+                                                            const fileName = path.split('/').pop() || 'file'
+                                                            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)
                                                             return (
-                                                                <a
-                                                                    key={index}
-                                                                    href={url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
-                                                                >
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                                    </svg>
-                                                                    {decodeURIComponent(fileName)}
-                                                                </a>
+                                                                <div key={index} className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => isImage ? previewImage(path) : downloadFile(path, fileName)}
+                                                                        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                                        </svg>
+                                                                        {decodeURIComponent(fileName)}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => downloadFile(path, fileName)}
+                                                                        className="p-1 hover:bg-gray-100 rounded"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
                                                             )
                                                         })}
                                                     </div>
@@ -427,7 +529,7 @@ export function TicketDetails({ ticket }: Props) {
                             </div>
                             <Button
                                 onClick={handleSendReply}
-                                disabled={(!replyContent.trim() && attachments.length === 0) || sending}
+                                disabled={sending}
                                 className={cn(
                                     isInternalNote ? "bg-[#8B5D23] hover:bg-[#704B1C] text-white" : ""
                                 )}
@@ -545,6 +647,31 @@ export function TicketDetails({ ticket }: Props) {
                     )}
                 </div>
             </div>
+
+            {/* Image Preview Dialog */}
+            <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+                <DialogContent className="max-w-[90vw] max-h-[90vh] min-w-[400px] min-h-[300px] p-0 border-0 bg-black/30 backdrop-blur-sm">
+                    <DialogHeader className="absolute top-2 right-2 z-50">
+                        <DialogClose className="rounded-full w-8 h-8 p-0 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white border-0">
+                            <X className="h-4 w-4" />
+                        </DialogClose>
+                    </DialogHeader>
+                    <div className="relative w-full h-full min-h-[300px] flex items-center justify-center p-8">
+                        {previewUrl && (
+                            <div className="relative max-w-full max-h-[85vh] min-w-[300px] min-h-[200px] bg-black/20 rounded-lg overflow-hidden">
+                                <Image
+                                    src={previewUrl}
+                                    alt="Preview"
+                                    width={1200}
+                                    height={800}
+                                    className="object-contain w-full h-full"
+                                    style={{ width: 'auto', height: 'auto', minWidth: '300px', minHeight: '200px' }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
